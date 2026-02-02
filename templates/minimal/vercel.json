@@ -1,0 +1,9 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"bunVersion": "1.x",
+	"functions": {
+		"src/index.ts": {
+			"runtime": "bun"
+		}
+	}
+}
