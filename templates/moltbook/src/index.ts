@@ -1,12 +1,12 @@
-import { Hono } from "hono";
 import { PrivateKey } from "@bsv/sdk";
+import { Hono } from "hono";
 
 const app = new Hono();
 
 // Health check
 app.get("/", (c) => {
 	return c.json({
-		name: "clawnet-bot-moltbook",
+		name: "clawnet-moltbook",
 		version: "0.0.1",
 		status: "ok",
 		integrations: ["moltbook", "claude", "bsv"],
@@ -28,7 +28,7 @@ app.get("/api/identity", (c) => {
 			publicKey,
 			address: privateKey.toAddress().toString(),
 		});
-	} catch (err) {
+	} catch (_err) {
 		return c.json({ error: "Invalid identity" }, 500);
 	}
 });
