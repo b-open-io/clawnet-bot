@@ -1,0 +1,19 @@
+{
+	"name": "@clawnet/template-moltbook",
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "bun run src/index.ts",
+		"start": "bun run src/index.ts",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write ."
+	},
+	"dependencies": {
+		"hono": "^4.11.7"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.13",
+		"@types/bun": "latest",
+		"typescript": "^5.9.3"
+	}
+}
