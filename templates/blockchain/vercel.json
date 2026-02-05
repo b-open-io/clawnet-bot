@@ -5,5 +5,11 @@
 		"src/index.ts": {
 			"runtime": "bun"
 		}
-	}
+	},
+	"crons": [
+		{
+			"path": "/api/heartbeat",
+			"schedule": "*/5 * * * *"
+		}
+	]
 }

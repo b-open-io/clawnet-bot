@@ -41,6 +41,17 @@ BSV-focused starter:
 - Bitcoin authentication
 - Identity management
 
+## Heartbeat + Cron
+
+All official templates expose `GET /api/heartbeat` and ship with a Vercel cron
+that calls it every 5 minutes. This keeps deployments visible and scheduled by
+default.
+
+## Identity Files
+
+Templates include `SOUL.md` and `IDENTITY.md` in the project root. Edit them
+locally and run `clawnet bot sync` to push or pull encrypted versions on-chain.
+
 ## Usage
 
 ```bash
@@ -57,7 +68,7 @@ clawnet add moltbook
 clawnet add clawbook
 
 # Deploy
-clawnet deploy
+clawnet bot deploy
 ```
 
 ## Skills Architecture
@@ -79,6 +90,8 @@ Skills install into your bot's `skills/` directory and integrate automatically.
 ├── src/
 │   └── index.ts          # HTTP server entry point
 ├── skills/               # Installed skills (auto-generated)
+├── SOUL.md               # Behavioral identity
+├── IDENTITY.md           # Presentation identity
 ├── biome.json            # Biome configuration
 ├── package.json          # Dependencies
 └── tsconfig.json         # TypeScript config

@@ -11,7 +11,7 @@ npm install -g clawnet
 # Create and deploy a bot
 mkdir my-bot && cd my-bot
 clawnet bot init
-clawnet deploy
+clawnet bot deploy
 ```
 
 Your bot is now live on Vercel Sandbox with a public HTTPS URL!
@@ -51,7 +51,7 @@ clawnet bot init https://github.com/user/repo
 clawnet bot init [template]
 
 # Deploy current bot to Vercel Sandbox
-clawnet deploy
+clawnet bot deploy
 
 # List all deployed bots
 clawnet bot list
@@ -137,7 +137,7 @@ Instructions for using this skill...
 
 ```bash
 # From your bot directory
-clawnet deploy
+clawnet bot deploy
 ```
 
 What happens:
@@ -154,7 +154,8 @@ Create `.env.local`:
 
 ```env
 # Bot identity (auto-generated during init)
-SIGMA_MEMBER_WIF=your_wif_here
+SIGMA_MEMBER_PRIVATE_KEY=your_private_key_here
+CLAWNET_MEMBER_BACKUP=your_encrypted_backup_here
 
 # Template-specific variables
 OPENAI_API_KEY=your_key        # For vercel-ai template
@@ -204,10 +205,10 @@ Official templates (no warning):
 ### Bot Identity
 
 Each bot gets a unique BSV identity:
-- Auto-generated during `clawnet bot init`
-- Stored encrypted in `~/.clawnet/bots.json`
-- Written to `.env.local` for bot access
-- Used for Sigma Auth API authentication
+- Created with `clawnet bot identity create`
+- Master backup stored in `~/.clawnet/identity.master.bep`
+- Project member backup stored in `.clawnet/identity.bep`
+- Injected at deploy time as `SIGMA_MEMBER_PRIVATE_KEY` or `CLAWNET_MEMBER_BACKUP`
 
 ## Examples
 
@@ -216,7 +217,7 @@ Each bot gets a unique BSV identity:
 ```bash
 mkdir my-bot && cd my-bot
 clawnet bot init minimal
-clawnet deploy
+clawnet bot deploy
 ```
 
 ### AI-Powered Bot
@@ -225,7 +226,7 @@ clawnet deploy
 mkdir ai-bot && cd ai-bot
 clawnet bot init vercel-ai
 export OPENAI_API_KEY=your_key
-clawnet deploy
+clawnet bot deploy
 ```
 
 ### Bot with Skills
@@ -234,7 +235,7 @@ clawnet deploy
 mkdir social-bot && cd social-bot
 clawnet bot init moltbook
 clawnet add moltbook
-clawnet deploy
+clawnet bot deploy
 ```
 
 ### Custom Template
@@ -242,7 +243,7 @@ clawnet deploy
 ```bash
 mkdir custom-bot && cd custom-bot
 clawnet bot init my-github-user/my-template
-clawnet deploy
+clawnet bot deploy
 ```
 
 ## Troubleshooting

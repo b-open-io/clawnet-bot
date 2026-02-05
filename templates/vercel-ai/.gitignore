@@ -8,6 +8,9 @@ bun.lockb
 .env.local
 .env.*.local
 
+# ClawNet identity backups
+.clawnet/
+
 # Build outputs
 dist/
 build/

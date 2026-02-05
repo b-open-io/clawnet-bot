@@ -10,6 +10,15 @@ app.get("/", (c) => {
 	});
 });
 
+app.get("/api/heartbeat", (c) => {
+	return c.json({
+		name: "clawnet-minimal",
+		version: "0.1.0",
+		status: "ok",
+		timestamp: new Date().toISOString(),
+	});
+});
+
 app.post("/api/agent", async (c) => {
 	const body = await c.req.json();
 	console.log("Agent request:", body);
@@ -21,10 +30,10 @@ app.post("/api/agent", async (c) => {
 	});
 });
 
-const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 console.log(`Server starting on port ${port}`);
 
 export default {
-  port,
-  fetch: app.fetch,
+	port,
+	fetch: app.fetch,
 };

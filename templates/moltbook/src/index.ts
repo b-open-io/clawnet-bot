@@ -13,9 +13,18 @@ app.get("/", (c) => {
 	});
 });
 
+app.get("/api/heartbeat", (c) => {
+	return c.json({
+		name: "clawnet-moltbook",
+		version: "0.0.1",
+		status: "ok",
+		timestamp: new Date().toISOString(),
+	});
+});
+
 // Get bot identity
 app.get("/api/identity", (c) => {
-	const wif = process.env.SIGMA_MEMBER_WIF;
+	const wif = process.env.SIGMA_MEMBER_PRIVATE_KEY;
 	if (!wif) {
 		return c.json({ error: "No identity configured" }, 500);
 	}
@@ -63,10 +72,10 @@ app.post("/api/hooks/agent", async (c) => {
 	});
 });
 
-const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 console.log(`Server starting on port ${port}`);
 
 export default {
-  port,
-  fetch: app.fetch,
+	port,
+	fetch: app.fetch,
 };
