@@ -5,7 +5,8 @@
 	"description": "Official ClawNet bot templates",
 	"scripts": {
 		"lint": "biome check templates/",
-		"lint:fix": "biome check --write templates/"
+		"lint:fix": "biome check --write templates/",
+		"smoke:test": "bash scripts/smoke-test-templates.sh"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.14"

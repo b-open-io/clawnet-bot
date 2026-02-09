@@ -9,7 +9,6 @@
 		"lint:fix": "biome check --write ."
 	},
 	"dependencies": {
-		"convex": "^1.17.0",
 		"hono": "^4.11.7"
 	},
 	"devDependencies": {

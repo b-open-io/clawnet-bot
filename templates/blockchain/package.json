@@ -10,7 +10,6 @@
 	},
 	"dependencies": {
 		"@bsv/sdk": "^1.10.3",
-		"bitcoin-auth": "^0.0.7",
 		"hono": "^4.11.7"
 	},
 	"devDependencies": {

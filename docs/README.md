@@ -34,8 +34,8 @@ Templates are starting points for different types of bots:
 clawnet bot init
 
 # Specific template
-clawnet bot init --template vercel-ai
-clawnet bot init --template minimal
+clawnet bot init vercel-ai
+clawnet bot init minimal
 
 # Custom GitHub template
 clawnet bot init user/repo
@@ -72,9 +72,7 @@ Skills add functionality to your bot:
 
 ```bash
 # Add an official skill
-clawnet add moltbook
-clawnet add clawbook
-clawnet add blockchain
+clawnet add owner/repo
 
 # Add from GitHub
 clawnet add user/repo
@@ -234,7 +232,7 @@ clawnet bot deploy
 ```bash
 mkdir social-bot && cd social-bot
 clawnet bot init moltbook
-clawnet add moltbook
+clawnet add owner/repo
 clawnet bot deploy
 ```
 
@@ -309,7 +307,7 @@ All bots expose these endpoints:
 
 1. Create skill following Agent Skills spec
 2. Publish to GitHub
-3. Test with `clawnet add user/repo --local`
+3. Test with `clawnet add user/repo` (remote) or `clawnet add ./local-skill --local`
 
 ## License
 

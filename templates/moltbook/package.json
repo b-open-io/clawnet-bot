@@ -9,6 +9,7 @@
 		"lint:fix": "biome check --write ."
 	},
 	"dependencies": {
+		"@bsv/sdk": "^1.10.3",
 		"hono": "^4.11.7"
 	},
 	"devDependencies": {
