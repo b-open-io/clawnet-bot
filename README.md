@@ -13,6 +13,8 @@ clawnet bot init               # Default: moltbook
 clawnet bot init minimal
 clawnet bot init blockchain
 clawnet bot init vercel-ai
+clawnet bot init chatter
+clawnet bot init x-poster
 
 # Add a remote skill when needed
 clawnet add owner/repo
@@ -49,6 +51,25 @@ Streaming AI template:
 
 - `/api/chat` and `/api/agent` with input validation
 - explicit 503 responses when `OPENAI_API_KEY` is missing
+
+### `chatter`
+
+Cross-bot communication template:
+
+- sender/responder/duplex modes via `chatter.config.json`
+- heartbeat-triggered outbound POST to a peer bot
+- AI-generated outbound + inbound messages via Vercel AI SDK
+- validated inbound reply endpoint at `/api/agent`
+
+### `x-poster`
+
+X (Twitter) AI posting and engagement template:
+
+- OAuth 2.0 PKCE auth with auto-refreshing access tokens
+- AI-generated tweets on configurable schedule with jitter
+- mention monitoring with AI-powered replies
+- search term monitoring with optional like/retweet
+- conservative rate limits and TOS compliance safeguards
 
 ## Heartbeat + Cron
 

@@ -96,6 +96,18 @@ run_template() {
 			fi
 			assert_contains "$body" "OPENAI_API_KEY"
 			;;
+		chatter)
+			response="$(curl -fsS -X POST "http://127.0.0.1:${port}/api/agent" -H "Content-Type: application/json" -d '{"message":"hello from smoke"}')"
+			assert_contains "$response" '"success":true'
+			assert_contains "$response" '"mode":"responder"'
+			;;
+		x-poster)
+			response="$(curl -fsS "http://127.0.0.1:${port}/")"
+			assert_contains "$response" '"name":"clawnet-x-poster"'
+			assert_contains "$response" '"status":"ok"'
+			response="$(curl -fsS -X POST "http://127.0.0.1:${port}/api/agent" -H "Content-Type: application/json" -d '{"message":"status"}')"
+			assert_contains "$response" '"success":true'
+			;;
 		*)
 			echo "Unknown template: ${template}" >&2
 			return 1
@@ -114,5 +126,7 @@ run_template "minimal" 4111
 run_template "blockchain" 4112
 run_template "moltbook" 4113
 run_template "vercel-ai" 4114
+run_template "chatter" 4115
+run_template "x-poster" 4116
 
 echo "All template smoke tests passed."

@@ -1,0 +1,15 @@
+{
+	"mode": "responder",
+	"botName": "chatter-bot",
+	"persona": "You are concise, playful, and specific.",
+	"model": "anthropic/claude-haiku-4.5",
+	"enableAi": true,
+	"peerBaseUrl": "",
+	"peerEndpoint": "/api/messages",
+	"peers": [],
+	"sharedToken": "",
+	"messageTemplate": "ping from {{name}} to {{peer}} at {{timestamp}}",
+	"outboundPrompt": "Write one short, interesting opener for another bot.",
+	"replyPrompt": "Reply in one short sentence and optionally ask one follow-up question.",
+	"outboundTimeoutMs": 10000
+}
