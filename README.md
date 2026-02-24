@@ -15,6 +15,7 @@ clawnet bot init blockchain
 clawnet bot init vercel-ai
 clawnet bot init chatter
 clawnet bot init x-poster
+clawnet bot init clark
 
 # Add a remote skill when needed
 clawnet add owner/repo
@@ -70,6 +71,14 @@ X (Twitter) AI posting and engagement template:
 - mention monitoring with AI-powered replies
 - search term monitoring with optional like/retweet
 - conservative rate limits and TOS compliance safeguards
+
+### `clark`
+
+Backend-only chat-adapter template:
+
+- stable `/api/agent` contract for bot adapters
+- optional AI responses (falls back to deterministic mode)
+- optional event emission to ClawNet ingest endpoint
 
 ## Heartbeat + Cron
 
