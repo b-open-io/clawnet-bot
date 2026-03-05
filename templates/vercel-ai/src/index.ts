@@ -1,4 +1,6 @@
-import { openai } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createOpenAI } from "@ai-sdk/openai";
+import type { LanguageModelV1 } from "ai";
 import { streamText } from "ai";
 import { Hono } from "hono";
 
@@ -98,20 +100,36 @@ function parseAgentRequest(value: unknown): AgentRequest | null {
 	};
 }
 
-function ensureOpenAiConfig() {
-	const apiKey = process.env.OPENAI_API_KEY?.trim();
-	if (!apiKey) {
-		return {
-			ok: false as const,
-			error: "OPENAI_API_KEY is required for vercel-ai template endpoints.",
-		};
+type ModelConfig =
+	| { ok: true; getModel: () => LanguageModelV1 }
+	| { ok: false; error: string };
+
+let cachedModelConfig: ModelConfig | null = null;
+
+function ensureModelConfig(): ModelConfig {
+	if (cachedModelConfig) return cachedModelConfig;
+
+	const anthropicKey = process.env.ANTHROPIC_API_KEY?.trim();
+	if (anthropicKey) {
+		const provider = createAnthropic({ apiKey: anthropicKey });
+		const modelId = process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-20250514";
+		cachedModelConfig = { ok: true, getModel: () => provider(modelId) };
+		return cachedModelConfig;
 	}
 
-	const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
-	return {
-		ok: true as const,
-		model,
+	const openaiKey = process.env.OPENAI_API_KEY?.trim();
+	if (openaiKey) {
+		const provider = createOpenAI({ apiKey: openaiKey });
+		const modelId = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
+		cachedModelConfig = { ok: true, getModel: () => provider(modelId) };
+		return cachedModelConfig;
+	}
+
+	cachedModelConfig = {
+		ok: false,
+		error: "Set ANTHROPIC_API_KEY or OPENAI_API_KEY for AI endpoints.",
 	};
+	return cachedModelConfig;
 }
 
 app.get("/", (c) => {
@@ -133,9 +151,9 @@ app.get("/api/heartbeat", (c) => {
 });
 
 app.post("/api/chat", async (c) => {
-	const openAiConfig = ensureOpenAiConfig();
-	if (!openAiConfig.ok) {
-		return c.json({ success: false, error: openAiConfig.error }, 503);
+	const modelConfig = ensureModelConfig();
+	if (!modelConfig.ok) {
+		return c.json({ success: false, error: modelConfig.error }, 503);
 	}
 
 	let payload: unknown;
@@ -163,7 +181,7 @@ app.post("/api/chat", async (c) => {
 			.join("\n");
 
 		const result = streamText({
-			model: openai(openAiConfig.model),
+			model: modelConfig.getModel(),
 			prompt,
 		});
 		return result.toDataStreamResponse();
@@ -173,9 +191,9 @@ app.post("/api/chat", async (c) => {
 });
 
 app.post("/api/agent", async (c) => {
-	const openAiConfig = ensureOpenAiConfig();
-	if (!openAiConfig.ok) {
-		return c.json({ success: false, error: openAiConfig.error }, 503);
+	const modelConfig = ensureModelConfig();
+	if (!modelConfig.ok) {
+		return c.json({ success: false, error: modelConfig.error }, 503);
 	}
 
 	let payload: unknown;
@@ -202,7 +220,7 @@ app.post("/api/agent", async (c) => {
 			: request.message;
 
 		const result = streamText({
-			model: openai(openAiConfig.model),
+			model: modelConfig.getModel(),
 			prompt,
 		});
 

@@ -1,0 +1,17 @@
+{
+	"name": "@clawnet/template-gateway",
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "bun run src/index.ts",
+		"start": "bun run src/index.ts"
+	},
+	"dependencies": {
+		"ai": "^6.0.116",
+		"hono": "^4.11.7"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"typescript": "^5.9.3"
+	}
+}
