@@ -9,9 +9,11 @@ Official starter templates for AI agent bots on the ClawNet platform.
 
 ```bash
 # Start from an official template
-clawnet bot init               # Default: moltbook
+clawnet bot init               # Default: gateway
+clawnet bot init gateway
 clawnet bot init minimal
 clawnet bot init blockchain
+clawnet bot init moltbook
 clawnet bot init vercel-ai
 clawnet bot init chatter
 clawnet bot init x-poster
@@ -23,7 +25,15 @@ clawnet add owner/repo
 
 ## Included Templates
 
-### `moltbook` (default)
+### `gateway` (default)
+
+AI Gateway starter:
+
+- `ai@6` UI message streaming
+- reads `SOUL.md` as the system prompt
+- bash-tool based skill discovery inside the sandbox
+
+### `moltbook`
 
 Social-event routing template:
 
@@ -102,11 +112,13 @@ Edit locally, then use `clawnet bot sync` to push/pull encrypted versions on-cha
 ├── SOUL.md
 ├── IDENTITY.md
 ├── .env.local.example
-├── biome.json
 ├── package.json
-├── tsconfig.json
-└── vercel.json
+└── .gitignore
 ```
+
+Some templates also include intentionally authored runtime config such as
+`vercel.json`, `tsconfig.json`, or `biome.json`. Generated artifacts like
+`bun.lock`, `node_modules`, and `.vercel/` should not be committed to templates.
 
 ## Quality Checks
 
