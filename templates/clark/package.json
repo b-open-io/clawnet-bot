@@ -4,9 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "start": "bun run src/index.ts",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "start": "bun run src/index.ts"
   },
   "dependencies": {
     "ai": "^6.0.98",
@@ -14,7 +12,6 @@
     "@ai-sdk/openai": "^3.0.33"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
     "@types/bun": "latest",
     "typescript": "^5.9.3"
   }

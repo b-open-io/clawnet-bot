@@ -1,11 +1,33 @@
-import { gateway, streamText } from "ai";
+import { gateway, streamText, type CoreTool } from "ai";
+import {
+	experimental_createSkillTool as createSkillTool,
+	createBashTool,
+} from "bash-tool";
 import { Hono } from "hono";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL = readFileSync(join(__dirname, "..", "SOUL.md"), "utf-8");
+
+// Discover skills and create tools if skills/ directory exists
+let agentTools: Record<string, CoreTool> = {};
+let skillInstructions = "";
+
+const skillsDir = join(__dirname, "..", "skills");
+if (existsSync(skillsDir)) {
+	const { skill, files, instructions } = await createSkillTool({
+		skillsDirectory: skillsDir,
+	});
+	const { tools } = await createBashTool({
+		files,
+		extraInstructions: instructions,
+	});
+	agentTools = { skill, ...tools };
+	skillInstructions = instructions;
+	console.log(`Loaded skills from ${skillsDir}`);
+}
 
 const app = new Hono();
 
@@ -103,7 +125,8 @@ app.post("/api/chat", async (c) => {
 	try {
 		const result = streamText({
 			model: gateway(MODEL_ID),
-			system: SOUL,
+			system: SOUL + (skillInstructions ? `\n\n${skillInstructions}` : ""),
+			tools: agentTools,
 			messages: messages.map((m) => ({ role: m.role, content: m.content })),
 		});
 
@@ -144,9 +167,11 @@ app.post("/api/agent", async (c) => {
 	const customSystem = typeof payload.system === "string" ? payload.system.trim() : undefined;
 
 	try {
+		const system = customSystem ?? SOUL;
 		const result = streamText({
 			model: gateway(MODEL_ID),
-			system: customSystem ?? SOUL,
+			system: system + (skillInstructions ? `\n\n${skillInstructions}` : ""),
+			tools: agentTools,
 			prompt: message,
 		});
 
