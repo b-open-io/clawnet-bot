@@ -283,7 +283,10 @@ function parseChatterConfig(value: unknown): Partial<ChatterConfig> {
 	};
 }
 
-function signMessage(content: string, timestamp: number): { signature: string; publicKey: string } | null {
+function signMessage(
+	content: string,
+	timestamp: number,
+): { signature: string; publicKey: string } | null {
 	if (!identity) return null;
 	try {
 		const payload = `${content}${timestamp}`;
@@ -626,17 +629,6 @@ function fallbackReply(message: string): string {
 	return `[${config.botName}] heard: "${excerpt}"`;
 }
 
-function withAuthToken(payload: Record<string, unknown>): Record<string, unknown> {
-	if (!config.sharedToken) {
-		return payload;
-	}
-
-	return {
-		...payload,
-		token: config.sharedToken,
-	};
-}
-
 function selectTarget(requestedTarget?: string): ResolvedTarget | null {
 	if (resolvedTargets.length === 0) {
 		return null;
@@ -858,7 +850,14 @@ async function relayToPeer(
 
 		// Fire-and-forget: record outbound message in Convex
 		const targetBapId = options?.targetBapId ?? target.name;
-		relayToConvex(myBapId, targetBapId, config.botName, target.name, outbound.message, conversationId);
+		relayToConvex(
+			myBapId,
+			targetBapId,
+			config.botName,
+			target.name,
+			outbound.message,
+			conversationId,
+		);
 
 		return {
 			attempted: true,

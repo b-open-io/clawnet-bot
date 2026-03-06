@@ -1,12 +1,9 @@
-import { gateway, streamText, type CoreTool } from "ai";
-import {
-	experimental_createSkillTool as createSkillTool,
-	createBashTool,
-} from "bash-tool";
-import { Hono } from "hono";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { type CoreTool, gateway, streamText } from "ai";
+import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
+import { Hono } from "hono";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL = readFileSync(join(__dirname, "..", "SOUL.md"), "utf-8");
@@ -153,10 +150,7 @@ app.post("/api/agent", async (c) => {
 	}
 
 	if (!isObject(payload) || typeof payload.message !== "string") {
-		return c.json(
-			{ success: false, error: "Expected { message: string, system?: string }." },
-			400,
-		);
+		return c.json({ success: false, error: "Expected { message: string, system?: string }." }, 400);
 	}
 
 	const message = (payload.message as string).trim();

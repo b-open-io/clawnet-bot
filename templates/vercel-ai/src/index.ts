@@ -100,9 +100,7 @@ function parseAgentRequest(value: unknown): AgentRequest | null {
 	};
 }
 
-type ModelConfig =
-	| { ok: true; getModel: () => LanguageModelV1 }
-	| { ok: false; error: string };
+type ModelConfig = { ok: true; getModel: () => LanguageModelV1 } | { ok: false; error: string };
 
 let cachedModelConfig: ModelConfig | null = null;
 
