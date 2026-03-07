@@ -12,6 +12,7 @@ import {
 	experimental_createSkillTool as createSkillTool,
 } from "bash-tool";
 import { Hono } from "hono";
+import { Sandbox } from "@vercel/sandbox";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL = readFileSync(join(__dirname, "..", "SOUL.md"), "utf-8");
@@ -141,6 +142,22 @@ app.get("/api/fleet", async (c) => {
 	}
 });
 
+async function resumeSandbox(sandboxId: string, botName: string): Promise<{ resumed: boolean; newUrl?: string; error?: string }> {
+	try {
+		const sandbox = await Sandbox.get({ sandboxId });
+		// Sandbox still exists — restart the bot process
+		try {
+			await sandbox.runCommand({ cmd: "pkill", args: ["-f", "bun"], sudo: true });
+		} catch { /* process may not be running */ }
+		await sandbox.runCommand({ cmd: "bun", args: ["run", "src/index.ts"], detached: true, cwd: "/app" });
+		const url = `https://${sandbox.getHost(3000)}`;
+		return { resumed: true, newUrl: url };
+	} catch (err) {
+		const message = err instanceof Error ? err.message : "Unknown error";
+		return { resumed: false, error: `Sandbox ${sandboxId} expired or unreachable: ${message}` };
+	}
+}
+
 app.post("/api/orchestrate", async (c) => {
 	try {
 		const peers = await fetchFleetPeers();
@@ -149,30 +166,27 @@ app.post("/api/orchestrate", async (c) => {
 				const p = peer as Record<string, unknown>;
 				const name = (p.botName ?? p.name ?? "unknown") as string;
 				const endpoint = (p.endpoint ?? p.url ?? "") as string;
-				if (!endpoint) return { name, endpoint, alive: false, latencyMs: 0, error: "no endpoint" };
+				const sandboxId = (p.sandboxId ?? "") as string;
+				if (!endpoint) return { name, endpoint, sandboxId, alive: false, latencyMs: 0, error: "no endpoint" };
 				const health = await checkHeartbeat(endpoint);
-				return { name, endpoint, ...health };
+				return { name, endpoint, sandboxId, ...health };
 			}),
 		);
 		const alive = healthChecks.filter((h) => h.alive);
 		const dead = healthChecks.filter((h) => !h.alive);
-		if (dead.length > 0) {
-			try {
-				const result = await generateText({
-					model: gateway("anthropic/claude-sonnet-4.6"),
-					system: SOUL + (skillInstructions ? `\n\n${skillInstructions}` : "") +
-						"\n\nYou are running as a cron job. Analyze the fleet health report and take action to redeploy dead bots using available skills. Be concise.",
-					tools: agentTools,
-					prompt: `Fleet health report:\n\nAlive (${alive.length}): ${alive.map((a) => a.name).join(", ") || "none"}\n\nDead (${dead.length}): ${dead.map((d) => `${d.name} (${d.endpoint})`).join(", ")}\n\nRedeploy the dead bots.`,
-					maxOutputTokens: 1000,
-				});
-				return c.json({ success: true, alive: alive.length, dead: dead.length, action: result.text, details: healthChecks });
-			} catch (err) {
-				console.error("Orchestrate AI error:", err);
-				return c.json({ success: true, alive: alive.length, dead: dead.length, action: "AI unavailable, reporting status only", details: healthChecks });
-			}
+		const actions: Array<{ bot: string; result: Awaited<ReturnType<typeof resumeSandbox>> }> = [];
+		for (const bot of dead) {
+			if (!bot.sandboxId) continue;
+			const result = await resumeSandbox(bot.sandboxId, bot.name);
+			actions.push({ bot: bot.name, result });
 		}
-		return c.json({ success: true, alive: alive.length, dead: dead.length, action: "All bots healthy, no action needed", details: healthChecks });
+		return c.json({
+			success: true,
+			alive: alive.length,
+			dead: dead.length,
+			actions,
+			details: healthChecks,
+		});
 	} catch (err) {
 		const message = err instanceof Error ? err.message : "Unknown error";
 		return c.json({ success: false, error: message }, 502);
@@ -198,19 +212,14 @@ app.post("/api/wake", async (c) => {
 		}) as Record<string, unknown> | undefined;
 		if (!peer) return c.json({ success: false, error: `Bot "${botName}" not found in fleet.` }, 404);
 		const endpoint = (peer.endpoint ?? peer.url ?? "") as string;
+		const sandboxId = (peer.sandboxId ?? "") as string;
 		if (endpoint) {
 			const health = await checkHeartbeat(endpoint);
 			if (health.alive) return c.json({ success: true, action: "already_alive", bot: botName, latencyMs: health.latencyMs });
 		}
-		const result = await generateText({
-			model: gateway("anthropic/claude-sonnet-4.6"),
-			system: SOUL + (skillInstructions ? `\n\n${skillInstructions}` : "") +
-				"\n\nYou need to redeploy a dead bot. Use available skills to do so. Be concise.",
-			tools: agentTools,
-			prompt: `Bot "${botName}" at ${endpoint || "unknown endpoint"} is not responding. Redeploy it.`,
-			maxOutputTokens: 1000,
-		});
-		return c.json({ success: true, action: "redeployed", bot: botName, result: result.text });
+		if (!sandboxId) return c.json({ success: false, error: `Bot "${botName}" has no sandboxId in registry.` }, 404);
+		const result = await resumeSandbox(sandboxId, botName);
+		return c.json({ success: true, bot: botName, ...result });
 	} catch (err) {
 		const message = err instanceof Error ? err.message : "Unknown error";
 		return c.json({ success: false, error: message }, 502);
