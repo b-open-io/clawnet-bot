@@ -52,6 +52,14 @@ function parseMessage(value: unknown): ChatMessage | null {
 	return { role, content: trimmed };
 }
 
+const faviconPath = join(__dirname, "..", "public", "favicon.ico");
+const faviconBuffer = existsSync(faviconPath) ? readFileSync(faviconPath) : null;
+
+app.get("/favicon.ico", (c) => {
+	if (!faviconBuffer) return c.notFound();
+	return c.body(faviconBuffer, 200, { "Content-Type": "image/x-icon", "Cache-Control": "public, max-age=86400" });
+});
+
 app.get("/", (c) => c.json({ name: "johnny", role: "fleet-mechanic", version: "0.1.0", status: "ok" }));
 app.get("/api/heartbeat", (c) => c.json({ name: "johnny", status: "ok", timestamp: new Date().toISOString() }));
 
