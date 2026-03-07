@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PEERS_API="https://clawnet.sh/api/v1/peers?status=running&limit=200"
+PEERS_API="https://clawnet.sh/api/v1/peers?exclude=none&limit=200"
 
 # Fetch peers list
 peers_json=$(curl -s --max-time 15 "$PEERS_API")

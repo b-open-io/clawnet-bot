@@ -31,7 +31,7 @@ fi
 sleep 10
 
 # Look up new URL from peers API
-PEERS_API="https://clawnet.sh/api/v1/peers?status=running&limit=200"
+PEERS_API="https://clawnet.sh/api/v1/peers?exclude=none&limit=200"
 peers_json=$(curl -s --max-time 15 "$PEERS_API")
 
 new_url=$(echo "$peers_json" | jq -r --arg name "$BOT_NAME" \

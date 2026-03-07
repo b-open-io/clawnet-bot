@@ -107,10 +107,10 @@ app.post("/api/agent", async (c) => {
 });
 
 async function fetchFleetPeers(): Promise<unknown[]> {
-	const res = await fetch(`${CLAWNET_PEERS_API}?status=running&limit=200`);
+	const res = await fetch(`${CLAWNET_PEERS_API}?exclude=none&limit=200`);
 	if (!res.ok) throw new Error(`ClawNet peers API returned ${res.status}`);
-	const data = (await res.json()) as Record<string, unknown>;
-	return Array.isArray(data.peers) ? data.peers : [];
+	const data = await res.json();
+	return Array.isArray(data) ? data : Array.isArray((data as Record<string, unknown>).peers) ? (data as Record<string, unknown>).peers as unknown[] : [];
 }
 
 async function checkHeartbeat(endpoint: string): Promise<{ alive: boolean; latencyMs: number }> {

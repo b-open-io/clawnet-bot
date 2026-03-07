@@ -11,7 +11,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REDEPLOY_SCRIPT="$SCRIPT_DIR/../../bot-redeploy/scripts/redeploy.sh"
 
-PEERS_API="https://clawnet.sh/api/v1/peers?status=running&limit=200"
+PEERS_API="https://clawnet.sh/api/v1/peers?exclude=none&limit=200"
 peers_json=$(curl -s --max-time 15 "$PEERS_API")
 
 # Look up bot URL from peers API
