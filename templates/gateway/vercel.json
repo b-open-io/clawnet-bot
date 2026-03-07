@@ -1,0 +1,14 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"functions": {
+		"src/index.ts": {
+			"runtime": "nodejs22.x"
+		}
+	},
+	"crons": [
+		{
+			"path": "/api/heartbeat",
+			"schedule": "*/5 * * * *"
+		}
+	]
+}
