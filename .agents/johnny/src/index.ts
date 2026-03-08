@@ -1,18 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-	generateText,
-	gateway,
-	streamText,
-	type ToolSet,
-} from "ai";
-import {
-	createBashTool,
-	experimental_createSkillTool as createSkillTool,
-} from "bash-tool";
-import { Hono } from "hono";
 import { Sandbox } from "@vercel/sandbox";
+import { gateway, generateText, streamText, type ToolSet } from "ai";
+import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
+import { type Context, Hono } from "hono";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL = readFileSync(join(__dirname, "..", "SOUL.md"), "utf-8");
@@ -58,17 +50,35 @@ const faviconBuffer = existsSync(faviconPath) ? readFileSync(faviconPath) : null
 
 app.get("/favicon.ico", (c) => {
 	if (!faviconBuffer) return c.notFound();
-	return c.body(faviconBuffer, 200, { "Content-Type": "image/x-icon", "Cache-Control": "public, max-age=86400" });
+	return c.body(new Uint8Array(faviconBuffer), 200, {
+		"Content-Type": "image/x-icon",
+		"Cache-Control": "public, max-age=86400",
+	});
 });
 
-app.get("/", (c) => c.json({ name: "johnny", role: "fleet-mechanic", version: "0.1.0", status: "ok" }));
-app.get("/api/heartbeat", (c) => c.json({ name: "johnny", status: "ok", timestamp: new Date().toISOString() }));
+app.get("/", (c) =>
+	c.json({ name: "johnny", role: "fleet-mechanic", version: "0.1.0", status: "ok" }),
+);
+app.get("/api/heartbeat", (c) =>
+	c.json({ name: "johnny", status: "ok", timestamp: new Date().toISOString() }),
+);
 
 app.post("/api/chat", async (c) => {
 	let payload: unknown;
-	try { payload = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON body." }, 400); }
-	if (typeof payload !== "object" || payload === null || !Array.isArray((payload as Record<string, unknown>).messages)) {
-		return c.json({ success: false, error: "Expected { messages: Array<{ role, content }> }." }, 400);
+	try {
+		payload = await c.req.json();
+	} catch {
+		return c.json({ success: false, error: "Invalid JSON body." }, 400);
+	}
+	if (
+		typeof payload !== "object" ||
+		payload === null ||
+		!Array.isArray((payload as Record<string, unknown>).messages)
+	) {
+		return c.json(
+			{ success: false, error: "Expected { messages: Array<{ role, content }> }." },
+			400,
+		);
 	}
 	const rawMessages = (payload as Record<string, unknown>).messages as unknown[];
 	const messages: ChatMessage[] = [];
@@ -94,12 +104,21 @@ app.post("/api/chat", async (c) => {
 
 app.post("/api/agent", async (c) => {
 	let payload: unknown;
-	try { payload = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON body." }, 400); }
-	if (typeof payload !== "object" || payload === null || typeof (payload as Record<string, unknown>).message !== "string") {
+	try {
+		payload = await c.req.json();
+	} catch {
+		return c.json({ success: false, error: "Invalid JSON body." }, 400);
+	}
+	if (
+		typeof payload !== "object" ||
+		payload === null ||
+		typeof (payload as Record<string, unknown>).message !== "string"
+	) {
 		return c.json({ success: false, error: "Expected { message: string }." }, 400);
 	}
 	const message = ((payload as Record<string, unknown>).message as string).trim();
-	if (!message || message.length > MAX_MESSAGE_LENGTH) return c.json({ success: false, error: "Message is empty or too long." }, 400);
+	if (!message || message.length > MAX_MESSAGE_LENGTH)
+		return c.json({ success: false, error: "Message is empty or too long." }, 400);
 	try {
 		const result = streamText({
 			model: gateway("anthropic/claude-sonnet-4.6"),
@@ -119,13 +138,19 @@ async function fetchFleetPeers(): Promise<unknown[]> {
 	const res = await fetch(`${CLAWNET_PEERS_API}?exclude=none&limit=200`);
 	if (!res.ok) throw new Error(`ClawNet peers API returned ${res.status}`);
 	const data = await res.json();
-	return Array.isArray(data) ? data : Array.isArray((data as Record<string, unknown>).peers) ? (data as Record<string, unknown>).peers as unknown[] : [];
+	return Array.isArray(data)
+		? data
+		: Array.isArray((data as Record<string, unknown>).peers)
+			? ((data as Record<string, unknown>).peers as unknown[])
+			: [];
 }
 
 async function checkHeartbeat(endpoint: string): Promise<{ alive: boolean; latencyMs: number }> {
 	const start = Date.now();
 	try {
-		const res = await fetch(`${endpoint}/api/heartbeat`, { signal: AbortSignal.timeout(HEARTBEAT_TIMEOUT) });
+		const res = await fetch(`${endpoint}/api/heartbeat`, {
+			signal: AbortSignal.timeout(HEARTBEAT_TIMEOUT),
+		});
 		return { alive: res.ok, latencyMs: Date.now() - start };
 	} catch {
 		return { alive: false, latencyMs: Date.now() - start };
@@ -142,15 +167,25 @@ app.get("/api/fleet", async (c) => {
 	}
 });
 
-async function resumeSandbox(sandboxId: string, botName: string): Promise<{ resumed: boolean; newUrl?: string; error?: string }> {
+async function resumeSandbox(
+	sandboxId: string,
+	_botName: string,
+): Promise<{ resumed: boolean; newUrl?: string; error?: string }> {
 	try {
 		const sandbox = await Sandbox.get({ sandboxId });
 		// Sandbox still exists — restart the bot process
 		try {
 			await sandbox.runCommand({ cmd: "pkill", args: ["-f", "bun"], sudo: true });
-		} catch { /* process may not be running */ }
-		await sandbox.runCommand({ cmd: "bun", args: ["run", "src/index.ts"], detached: true, cwd: "/app" });
-		const url = `https://${sandbox.getHost(3000)}`;
+		} catch {
+			/* process may not be running */
+		}
+		await sandbox.runCommand({
+			cmd: "bun",
+			args: ["run", "src/index.ts"],
+			detached: true,
+			cwd: "/app",
+		});
+		const url = sandbox.domain(3000);
 		return { resumed: true, newUrl: url };
 	} catch (err) {
 		const message = err instanceof Error ? err.message : "Unknown error";
@@ -158,7 +193,7 @@ async function resumeSandbox(sandboxId: string, botName: string): Promise<{ resu
 	}
 }
 
-app.post("/api/orchestrate", async (c) => {
+async function orchestrateFleet(c: Context) {
 	try {
 		const peers = await fetchFleetPeers();
 		const healthChecks = await Promise.all(
@@ -167,7 +202,8 @@ app.post("/api/orchestrate", async (c) => {
 				const name = (p.botName ?? p.name ?? "unknown") as string;
 				const endpoint = (p.endpoint ?? p.url ?? "") as string;
 				const sandboxId = (p.sandboxId ?? "") as string;
-				if (!endpoint) return { name, endpoint, sandboxId, alive: false, latencyMs: 0, error: "no endpoint" };
+				if (!endpoint)
+					return { name, endpoint, sandboxId, alive: false, latencyMs: 0, error: "no endpoint" };
 				const health = await checkHeartbeat(endpoint);
 				return { name, endpoint, sandboxId, ...health };
 			}),
@@ -191,15 +227,25 @@ app.post("/api/orchestrate", async (c) => {
 		const message = err instanceof Error ? err.message : "Unknown error";
 		return c.json({ success: false, error: message }, 502);
 	}
-});
+}
+
+app.get("/api/orchestrate", orchestrateFleet);
+app.post("/api/orchestrate", orchestrateFleet);
 
 app.post("/api/wake", async (c) => {
 	let payload: unknown;
-	try { const raw = await c.req.text(); payload = JSON.parse(raw); } catch (err) {
+	try {
+		const raw = await c.req.text();
+		payload = JSON.parse(raw);
+	} catch (err) {
 		const detail = err instanceof Error ? err.message : "unknown";
 		return c.json({ success: false, error: `Invalid JSON body: ${detail}` }, 400);
 	}
-	if (typeof payload !== "object" || payload === null || typeof (payload as Record<string, unknown>).bot !== "string") {
+	if (
+		typeof payload !== "object" ||
+		payload === null ||
+		typeof (payload as Record<string, unknown>).bot !== "string"
+	) {
 		return c.json({ success: false, error: "Expected { bot: string }." }, 400);
 	}
 	const botName = ((payload as Record<string, unknown>).bot as string).trim();
@@ -207,17 +253,30 @@ app.post("/api/wake", async (c) => {
 	try {
 		const peers = await fetchFleetPeers();
 		const peer = peers.find((p) => {
-			const name = ((p as Record<string, unknown>).botName ?? (p as Record<string, unknown>).name ?? "") as string;
+			const name = ((p as Record<string, unknown>).botName ??
+				(p as Record<string, unknown>).name ??
+				"") as string;
 			return name.toLowerCase() === botName.toLowerCase();
 		}) as Record<string, unknown> | undefined;
-		if (!peer) return c.json({ success: false, error: `Bot "${botName}" not found in fleet.` }, 404);
+		if (!peer)
+			return c.json({ success: false, error: `Bot "${botName}" not found in fleet.` }, 404);
 		const endpoint = (peer.endpoint ?? peer.url ?? "") as string;
 		const sandboxId = (peer.sandboxId ?? "") as string;
 		if (endpoint) {
 			const health = await checkHeartbeat(endpoint);
-			if (health.alive) return c.json({ success: true, action: "already_alive", bot: botName, latencyMs: health.latencyMs });
+			if (health.alive)
+				return c.json({
+					success: true,
+					action: "already_alive",
+					bot: botName,
+					latencyMs: health.latencyMs,
+				});
 		}
-		if (!sandboxId) return c.json({ success: false, error: `Bot "${botName}" has no sandboxId in registry.` }, 404);
+		if (!sandboxId)
+			return c.json(
+				{ success: false, error: `Bot "${botName}" has no sandboxId in registry.` },
+				404,
+			);
 		const result = await resumeSandbox(sandboxId, botName);
 		return c.json({ success: true, bot: botName, ...result });
 	} catch (err) {
@@ -237,49 +296,83 @@ type P2PMessageRequest = {
 
 function parseP2PMessage(value: unknown): P2PMessageRequest | null {
 	if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
-	const { from, message, conversationId, signature, publicKey, timestamp } = value as Record<string, unknown>;
+	const { from, message, conversationId, signature, publicKey, timestamp } = value as Record<
+		string,
+		unknown
+	>;
 	if (typeof from !== "object" || from === null || Array.isArray(from)) return null;
 	const fromObj = from as Record<string, unknown>;
 	if (typeof fromObj.bapId !== "string" || typeof fromObj.botName !== "string") return null;
-	if (typeof message !== "string" || typeof signature !== "string" || typeof publicKey !== "string" || typeof timestamp !== "number") return null;
+	if (
+		typeof message !== "string" ||
+		typeof signature !== "string" ||
+		typeof publicKey !== "string" ||
+		typeof timestamp !== "number"
+	)
+		return null;
 	const trimmedMessage = (message as string).trim();
 	if (!trimmedMessage || trimmedMessage.length > MAX_MESSAGE_LENGTH) return null;
 	return {
 		from: { bapId: fromObj.bapId as string, botName: fromObj.botName as string },
 		message: trimmedMessage,
 		conversationId: typeof conversationId === "string" ? conversationId : undefined,
-		signature: signature as string, publicKey: publicKey as string, timestamp: timestamp as number,
+		signature: signature as string,
+		publicKey: publicKey as string,
+		timestamp: timestamp as number,
 	};
 }
 
 function hasValidSignature(req: P2PMessageRequest): boolean {
-	return typeof req.signature === "string" && req.signature.length > 0 &&
-		typeof req.publicKey === "string" && req.publicKey.length > 0 &&
-		typeof req.timestamp === "number" && req.timestamp > 0;
+	return (
+		typeof req.signature === "string" &&
+		req.signature.length > 0 &&
+		typeof req.publicKey === "string" &&
+		req.publicKey.length > 0 &&
+		typeof req.timestamp === "number" &&
+		req.timestamp > 0
+	);
 }
 
 app.post("/api/messages", async (c) => {
 	let payload: unknown;
-	try { const raw = await c.req.text(); payload = JSON.parse(raw); } catch (err) {
+	try {
+		const raw = await c.req.text();
+		payload = JSON.parse(raw);
+	} catch (err) {
 		const detail = err instanceof Error ? err.message : "unknown";
 		return c.json({ success: false, error: `Invalid JSON body: ${detail}` }, 400);
 	}
 	const request = parseP2PMessage(payload);
-	if (!request) return c.json({ success: false, error: "Expected { from: { bapId, botName }, message, signature, publicKey, timestamp }." }, 400);
-	if (!hasValidSignature(request)) return c.json({ success: false, error: "Invalid signature." }, 401);
+	if (!request)
+		return c.json(
+			{
+				success: false,
+				error: "Expected { from: { bapId, botName }, message, signature, publicKey, timestamp }.",
+			},
+			400,
+		);
+	if (!hasValidSignature(request))
+		return c.json({ success: false, error: "Invalid signature." }, 401);
 	let reply = `Message received from ${request.from.botName}. Johnny acknowledges.`;
 	try {
 		const result = await generateText({
 			model: gateway("anthropic/claude-haiku-4.5"),
-			system: SOUL + "\n\nYou are receiving a P2P message from another bot. Respond briefly and helpfully. You are the fleet mechanic.",
+			system:
+				SOUL +
+				"\n\nYou are receiving a P2P message from another bot. Respond briefly and helpfully. You are the fleet mechanic.",
 			prompt: `[From ${request.from.botName}]: ${request.message}`,
 			maxOutputTokens: 300,
 		});
 		if (result.text.trim()) reply = result.text.trim();
-	} catch (err) { console.error("P2P message AI reply error:", err); }
+	} catch (err) {
+		console.error("P2P message AI reply error:", err);
+	}
 	return c.json({
-		success: true, from: { bapId: "johnny", botName: "johnny" }, reply,
-		conversationId: request.conversationId ?? null, timestamp: Math.floor(Date.now() / 1000),
+		success: true,
+		from: { bapId: "johnny", botName: "johnny" },
+		reply,
+		conversationId: request.conversationId ?? null,
+		timestamp: Math.floor(Date.now() / 1000),
 	});
 });
 

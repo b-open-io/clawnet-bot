@@ -1,0 +1,233 @@
+[
+  {
+    "_type": "frame",
+    "shapeId": "frame_persistent",
+    "x": 50, "y": 50,
+    "w": 700, "h": 520,
+    "text": "PERSISTENT LAYER (Always On)"
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "johnny",
+    "x": 100, "y": 130,
+    "w": 240, "h": 100,
+    "color": "violet",
+    "fill": "solid",
+    "text": "Johnny\n(Fleet Orchestrator)",
+    "note": "Persistent Vercel deployment. Routes messages, wakes bots, runs crons."
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "registry",
+    "x": 440, "y": 130,
+    "w": 240, "h": 100,
+    "color": "light-green",
+    "fill": "solid",
+    "text": "Bot Registry\n(Persistent Store)",
+    "note": "KV store: bot configs, templates, sandbox IDs, schedules, status. Survives sandbox death."
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "msg_queue",
+    "x": 100, "y": 310,
+    "w": 240, "h": 100,
+    "color": "light-blue",
+    "fill": "solid",
+    "text": "Message Queue",
+    "note": "Queued messages for offline bots. Johnny delivers on wake."
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "scheduler",
+    "x": 440, "y": 310,
+    "w": 240, "h": 100,
+    "color": "orange",
+    "fill": "solid",
+    "text": "Scheduler\n(Johnny's Crons)",
+    "note": "*/5 health check, */10 orchestrate. Per-bot schedules from registry."
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_johnny_registry",
+    "x1": 340, "y1": 180,
+    "x2": 440, "y2": 180,
+    "color": "black",
+    "fromId": "johnny",
+    "toId": "registry",
+    "text": "read/write"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_johnny_queue",
+    "x1": 220, "y1": 230,
+    "x2": 220, "y2": 310,
+    "color": "black",
+    "fromId": "johnny",
+    "toId": "msg_queue",
+    "text": "enqueue/drain"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_scheduler_johnny",
+    "x1": 440, "y1": 360,
+    "x2": 340, "y2": 230,
+    "color": "black",
+    "fromId": "scheduler",
+    "toId": "johnny",
+    "text": "trigger wake"
+  },
+  {
+    "_type": "frame",
+    "shapeId": "frame_ephemeral",
+    "x": 50, "y": 630,
+    "w": 700, "h": 340,
+    "text": "EPHEMERAL LAYER (Vercel Sandboxes — 30min TTL)"
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "martha",
+    "x": 100, "y": 710,
+    "w": 180, "h": 80,
+    "color": "blue",
+    "fill": "solid",
+    "text": "Martha\n(Front Desk)"
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "ordi",
+    "x": 310, "y": 710,
+    "w": 180, "h": 80,
+    "color": "blue",
+    "fill": "solid",
+    "text": "Ordi\n(Community Mgr)"
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "paul",
+    "x": 520, "y": 710,
+    "w": 180, "h": 80,
+    "color": "blue",
+    "fill": "solid",
+    "text": "Paul\n(Security Ops)"
+  },
+  {
+    "_type": "rectangle",
+    "shapeId": "bot_n",
+    "x": 310, "y": 850,
+    "w": 180, "h": 80,
+    "color": "grey",
+    "fill": "solid",
+    "text": "Bot N\n(Any Future Bot)"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_johnny_martha",
+    "x1": 220, "y1": 430,
+    "x2": 190, "y2": 710,
+    "color": "violet",
+    "fromId": "johnny",
+    "toId": "martha",
+    "text": "wake / message"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_johnny_ordi",
+    "x1": 280, "y1": 430,
+    "x2": 400, "y2": 710,
+    "color": "violet",
+    "fromId": "johnny",
+    "toId": "ordi",
+    "text": "wake / message"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_johnny_paul",
+    "x1": 340, "y1": 430,
+    "x2": 610, "y2": 710,
+    "color": "violet",
+    "fromId": "johnny",
+    "toId": "paul",
+    "text": "wake / message"
+  },
+  {
+    "_type": "frame",
+    "shapeId": "frame_external",
+    "x": 820, "y": 50,
+    "w": 350, "h": 920,
+    "text": "EXTERNAL"
+  },
+  {
+    "_type": "cloud",
+    "shapeId": "clawnet_api",
+    "x": 870, "y": 130,
+    "w": 250, "h": 100,
+    "color": "light-blue",
+    "fill": "solid",
+    "text": "ClawNet API"
+  },
+  {
+    "_type": "cloud",
+    "shapeId": "bopen_ai",
+    "x": 870, "y": 310,
+    "w": 250, "h": 100,
+    "color": "light-blue",
+    "fill": "solid",
+    "text": "bopen.ai"
+  },
+  {
+    "_type": "diamond",
+    "shapeId": "user",
+    "x": 870, "y": 510,
+    "w": 250, "h": 100,
+    "color": "yellow",
+    "fill": "solid",
+    "text": "User / Caller"
+  },
+  {
+    "_type": "cloud",
+    "shapeId": "sandbox_sdk",
+    "x": 870, "y": 710,
+    "w": 250, "h": 100,
+    "color": "light-green",
+    "fill": "solid",
+    "text": "Vercel Sandbox SDK"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_johnny_clawnet",
+    "x1": 340, "y1": 150,
+    "x2": 870, "y2": 180,
+    "color": "black",
+    "fromId": "johnny",
+    "toId": "clawnet_api",
+    "text": "peer discovery"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_user_johnny",
+    "x1": 870, "y1": 560,
+    "x2": 340, "y2": 200,
+    "color": "yellow",
+    "fromId": "user",
+    "toId": "johnny",
+    "text": "message bot X"
+  },
+  {
+    "_type": "arrow",
+    "shapeId": "a_johnny_sandbox",
+    "x1": 340, "y1": 360,
+    "x2": 870, "y2": 760,
+    "color": "violet",
+    "fromId": "johnny",
+    "toId": "sandbox_sdk",
+    "text": "create / resume"
+  },
+  {
+    "_type": "note",
+    "shapeId": "note_flow",
+    "x": 820, "y": 870,
+    "w": 350, "h": 90,
+    "color": "yellow",
+    "text": "FLOW: User messages Bot X → Johnny checks registry → Bot dead? → Wake via Sandbox SDK → Drain queue → Forward message → Return response"
+  }
+]

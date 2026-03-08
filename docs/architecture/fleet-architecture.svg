@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -10 1290 1040" width="1290" height="1040">
+  <defs>
+    <style>text { user-select: none; }</style>
+    <marker id="arrow-black" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1d1d1d"/></marker>
+    <marker id="arrow-violet" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/></marker>
+    <marker id="arrow-yellow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#eab308"/></marker>
+  </defs>
+  <rect x="-60" y="-10" width="1290" height="1040" fill="white"/>
+  <g transform="translate(50,50)">
+    <rect x="0" y="0" width="700" height="520" fill="none" stroke="#9ca3af" stroke-width="1" stroke-dasharray="6,3" rx="4"/>
+    
+  </g>
+  <g transform="translate(50,630)">
+    <rect x="0" y="0" width="700" height="340" fill="none" stroke="#9ca3af" stroke-width="1" stroke-dasharray="6,3" rx="4"/>
+    
+  </g>
+  <g transform="translate(820,50)">
+    <rect x="0" y="0" width="350" height="920" fill="none" stroke="#9ca3af" stroke-width="1" stroke-dasharray="6,3" rx="4"/>
+    
+  </g>
+  <line x1="170" y1="130" x2="510" y2="130" stroke="#1d1d1d" stroke-width="2" marker-end="url(#arrow-black)"/><text x="340" y="122" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">read/write</text>
+  <line x1="170" y1="130" x2="170" y2="310" stroke="#1d1d1d" stroke-width="2" marker-end="url(#arrow-black)"/><text x="170" y="212" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">enqueue/drain</text>
+  <line x1="510" y1="310" x2="170" y2="130" stroke="#1d1d1d" stroke-width="2" marker-end="url(#arrow-black)"/><text x="340" y="212" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">trigger wake</text>
+  <line x1="170" y1="130" x2="140" y2="120" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-violet)"/><text x="155" y="117" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">wake / message</text>
+  <line x1="170" y1="130" x2="350" y2="120" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-violet)"/><text x="260" y="117" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">wake / message</text>
+  <line x1="170" y1="130" x2="560" y2="120" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-violet)"/><text x="365" y="117" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">wake / message</text>
+  <line x1="170" y1="130" x2="175" y2="130" stroke="#1d1d1d" stroke-width="2" marker-end="url(#arrow-black)"/><text x="172.5" y="122" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">peer discovery</text>
+  <line x1="175" y1="510" x2="170" y2="130" stroke="#eab308" stroke-width="2" marker-end="url(#arrow-yellow)"/><text x="172.5" y="312" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">message bot X</text>
+  <line x1="170" y1="130" x2="175" y2="710" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-violet)"/><text x="172.5" y="412" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#9ca3af">create / resume</text>
+  <g transform="translate(50,80)"><rect x="0" y="0" width="240" height="100" rx="4" ry="4" fill="#7c3aed" fill-opacity="0.15" stroke="#7c3aed" stroke-width="2"/><text x="120" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Johnny(Fleet Orchestrator)</text></g>
+  <g transform="translate(390,80)"><rect x="0" y="0" width="240" height="100" rx="4" ry="4" fill="#86efac" fill-opacity="0.15" stroke="#86efac" stroke-width="2"/><text x="120" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Bot Registry(Persistent Store)</text></g>
+  <g transform="translate(50,260)"><rect x="0" y="0" width="240" height="100" rx="4" ry="4" fill="#93c5fd" fill-opacity="0.15" stroke="#93c5fd" stroke-width="2"/><text x="120" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Message Queue</text></g>
+  <g transform="translate(390,260)"><rect x="0" y="0" width="240" height="100" rx="4" ry="4" fill="#f97316" fill-opacity="0.15" stroke="#f97316" stroke-width="2"/><text x="120" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Scheduler(Johnny's Crons)</text></g>
+  <g transform="translate(50,80)"><rect x="0" y="0" width="180" height="80" rx="4" ry="4" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-width="2"/><text x="90" y="40" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Martha(Front Desk)</text></g>
+  <g transform="translate(260,80)"><rect x="0" y="0" width="180" height="80" rx="4" ry="4" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-width="2"/><text x="90" y="40" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Ordi(Community Mgr)</text></g>
+  <g transform="translate(470,80)"><rect x="0" y="0" width="180" height="80" rx="4" ry="4" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-width="2"/><text x="90" y="40" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Paul(Security Ops)</text></g>
+  <g transform="translate(260,220)"><rect x="0" y="0" width="180" height="80" rx="4" ry="4" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2"/><text x="90" y="40" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Bot N(Any Future Bot)</text></g>
+  <g transform="translate(50,80)"><rect x="4" y="4" width="242" height="92" rx="20" ry="20" fill="#93c5fd" fill-opacity="0.15" stroke="#93c5fd" stroke-width="2" stroke-dasharray="8,4"/><text x="125" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">ClawNet API</text></g>
+  <g transform="translate(50,260)"><rect x="4" y="4" width="242" height="92" rx="20" ry="20" fill="#93c5fd" fill-opacity="0.15" stroke="#93c5fd" stroke-width="2" stroke-dasharray="8,4"/><text x="125" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">bopen.ai</text></g>
+  <g transform="translate(50,460)"><polygon points="125,0 250,50 125,100 0,50" fill="#eab308" fill-opacity="0.15" stroke="#eab308" stroke-width="2"/><text x="125" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">User / Caller</text></g>
+  <g transform="translate(50,660)"><rect x="4" y="4" width="242" height="92" rx="20" ry="20" fill="#86efac" fill-opacity="0.15" stroke="#86efac" stroke-width="2" stroke-dasharray="8,4"/><text x="125" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, sans-serif" font-size="14" fill="#1d1d1d">Vercel Sandbox SDK</text></g>
+  <g transform="translate(0,820)">
+    <rect x="0" y="0" width="200" height="100" rx="2" fill="#eab308" fill-opacity="0.2" stroke="#eab308" stroke-width="1"/>
+    <text x="10" y="20" font-family="system-ui, sans-serif" font-size="11" fill="#1d1d1d">FLOW: User messages Bot X → Johnny checks registry → Bot dead? → Wake via Sandbox SDK → Drain queue → Forward message → Return response</text>
+  </g>
+</svg>

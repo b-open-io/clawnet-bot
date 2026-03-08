@@ -1,0 +1,1507 @@
+{
+  "schema": {
+    "schemaVersion": 2,
+    "sequences": {
+      "com.tldraw.store": 5,
+      "com.tldraw.asset": 1,
+      "com.tldraw.camera": 1,
+      "com.tldraw.document": 2,
+      "com.tldraw.instance": 26,
+      "com.tldraw.instance_page_state": 5,
+      "com.tldraw.page": 1,
+      "com.tldraw.instance_presence": 6,
+      "com.tldraw.pointer": 1,
+      "com.tldraw.shape": 4,
+      "com.tldraw.asset.bookmark": 2,
+      "com.tldraw.asset.image": 5,
+      "com.tldraw.asset.video": 5,
+      "com.tldraw.shape.arrow": 8,
+      "com.tldraw.shape.bookmark": 2,
+      "com.tldraw.shape.draw": 4,
+      "com.tldraw.shape.embed": 4,
+      "com.tldraw.shape.frame": 1,
+      "com.tldraw.shape.geo": 11,
+      "com.tldraw.shape.group": 0,
+      "com.tldraw.shape.highlight": 3,
+      "com.tldraw.shape.image": 5,
+      "com.tldraw.shape.line": 5,
+      "com.tldraw.shape.note": 10,
+      "com.tldraw.shape.text": 4,
+      "com.tldraw.shape.video": 4,
+      "com.tldraw.binding.arrow": 1
+    }
+  },
+  "store": {
+    "document:document": {
+      "gridSize": 10,
+      "name": "ClawNet Fleet Architecture",
+      "meta": {},
+      "id": "document:document",
+      "typeName": "document"
+    },
+    "page:page": {
+      "meta": {},
+      "id": "page:page",
+      "name": "Page 1",
+      "index": "a1",
+      "typeName": "page"
+    },
+    "shape:frame_persistent": {
+      "id": "shape:frame_persistent",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a1",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "frame",
+      "x": 50,
+      "y": 50,
+      "props": {
+        "w": 700,
+        "h": 520,
+        "name": "",
+        "color": "black"
+      }
+    },
+    "shape:johnny": {
+      "id": "shape:johnny",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a2",
+      "parentId": "shape:frame_persistent",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {
+        "note": "Persistent Vercel deployment. Routes messages, wakes bots, runs crons."
+      },
+      "type": "geo",
+      "x": 50,
+      "y": 80,
+      "props": {
+        "geo": "rectangle",
+        "w": 240,
+        "h": 100,
+        "color": "violet",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Johnny"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "(Fleet Orchestrator)"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:registry": {
+      "id": "shape:registry",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a3",
+      "parentId": "shape:frame_persistent",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {
+        "note": "KV store: bot configs, templates, sandbox IDs, schedules, status. Survives sandbox death."
+      },
+      "type": "geo",
+      "x": 390,
+      "y": 80,
+      "props": {
+        "geo": "rectangle",
+        "w": 240,
+        "h": 100,
+        "color": "light-green",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Bot Registry"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "(Persistent Store)"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:msg_queue": {
+      "id": "shape:msg_queue",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a4",
+      "parentId": "shape:frame_persistent",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {
+        "note": "Queued messages for offline bots. Johnny delivers on wake."
+      },
+      "type": "geo",
+      "x": 50,
+      "y": 260,
+      "props": {
+        "geo": "rectangle",
+        "w": 240,
+        "h": 100,
+        "color": "light-blue",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Message Queue"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:scheduler": {
+      "id": "shape:scheduler",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a5",
+      "parentId": "shape:frame_persistent",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {
+        "note": "*/5 health check, */10 orchestrate. Per-bot schedules from registry."
+      },
+      "type": "geo",
+      "x": 390,
+      "y": 260,
+      "props": {
+        "geo": "rectangle",
+        "w": 240,
+        "h": 100,
+        "color": "orange",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Scheduler"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "(Johnny's Crons)"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:a_johnny_registry": {
+      "id": "shape:a_johnny_registry",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a6",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 340,
+      "y": 180,
+      "props": {
+        "kind": "elbow",
+        "color": "black",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "read/write"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_johnny_registry_start": {
+      "id": "binding:a_johnny_registry_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_registry",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_johnny_registry_end": {
+      "id": "binding:a_johnny_registry_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_registry",
+      "toId": "shape:registry",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:a_johnny_queue": {
+      "id": "shape:a_johnny_queue",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a7",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 220,
+      "y": 230,
+      "props": {
+        "kind": "elbow",
+        "color": "black",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "enqueue/drain"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_johnny_queue_start": {
+      "id": "binding:a_johnny_queue_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_queue",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_johnny_queue_end": {
+      "id": "binding:a_johnny_queue_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_queue",
+      "toId": "shape:msg_queue",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:a_scheduler_johnny": {
+      "id": "shape:a_scheduler_johnny",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a8",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 440,
+      "y": 360,
+      "props": {
+        "kind": "elbow",
+        "color": "black",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "trigger wake"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_scheduler_johnny_start": {
+      "id": "binding:a_scheduler_johnny_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_scheduler_johnny",
+      "toId": "shape:scheduler",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_scheduler_johnny_end": {
+      "id": "binding:a_scheduler_johnny_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_scheduler_johnny",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:frame_ephemeral": {
+      "id": "shape:frame_ephemeral",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "a9",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "frame",
+      "x": 50,
+      "y": 630,
+      "props": {
+        "w": 700,
+        "h": 340,
+        "name": "",
+        "color": "black"
+      }
+    },
+    "shape:martha": {
+      "id": "shape:martha",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aA",
+      "parentId": "shape:frame_ephemeral",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 50,
+      "y": 80,
+      "props": {
+        "geo": "rectangle",
+        "w": 180,
+        "h": 80,
+        "color": "blue",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Martha"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "(Front Desk)"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:ordi": {
+      "id": "shape:ordi",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aB",
+      "parentId": "shape:frame_ephemeral",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 260,
+      "y": 80,
+      "props": {
+        "geo": "rectangle",
+        "w": 180,
+        "h": 80,
+        "color": "blue",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ordi"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "(Community Mgr)"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:paul": {
+      "id": "shape:paul",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aC",
+      "parentId": "shape:frame_ephemeral",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 470,
+      "y": 80,
+      "props": {
+        "geo": "rectangle",
+        "w": 180,
+        "h": 80,
+        "color": "blue",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Paul"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "(Security Ops)"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:bot_n": {
+      "id": "shape:bot_n",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aD",
+      "parentId": "shape:frame_ephemeral",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 260,
+      "y": 220,
+      "props": {
+        "geo": "rectangle",
+        "w": 180,
+        "h": 80,
+        "color": "grey",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Bot N"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "(Any Future Bot)"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:a_johnny_martha": {
+      "id": "shape:a_johnny_martha",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aE",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 220,
+      "y": 430,
+      "props": {
+        "kind": "elbow",
+        "color": "violet",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "wake / message"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_johnny_martha_start": {
+      "id": "binding:a_johnny_martha_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_martha",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_johnny_martha_end": {
+      "id": "binding:a_johnny_martha_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_martha",
+      "toId": "shape:martha",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:a_johnny_ordi": {
+      "id": "shape:a_johnny_ordi",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aF",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 280,
+      "y": 430,
+      "props": {
+        "kind": "elbow",
+        "color": "violet",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "wake / message"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_johnny_ordi_start": {
+      "id": "binding:a_johnny_ordi_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_ordi",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_johnny_ordi_end": {
+      "id": "binding:a_johnny_ordi_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_ordi",
+      "toId": "shape:ordi",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:a_johnny_paul": {
+      "id": "shape:a_johnny_paul",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aG",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 340,
+      "y": 430,
+      "props": {
+        "kind": "elbow",
+        "color": "violet",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "wake / message"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_johnny_paul_start": {
+      "id": "binding:a_johnny_paul_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_paul",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_johnny_paul_end": {
+      "id": "binding:a_johnny_paul_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_paul",
+      "toId": "shape:paul",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:frame_external": {
+      "id": "shape:frame_external",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aH",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "frame",
+      "x": 820,
+      "y": 50,
+      "props": {
+        "w": 350,
+        "h": 920,
+        "name": "",
+        "color": "black"
+      }
+    },
+    "shape:clawnet_api": {
+      "id": "shape:clawnet_api",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aI",
+      "parentId": "shape:frame_external",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 50,
+      "y": 80,
+      "props": {
+        "geo": "cloud",
+        "w": 250,
+        "h": 100,
+        "color": "light-blue",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "ClawNet API"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:bopen_ai": {
+      "id": "shape:bopen_ai",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aJ",
+      "parentId": "shape:frame_external",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 50,
+      "y": 260,
+      "props": {
+        "geo": "cloud",
+        "w": 250,
+        "h": 100,
+        "color": "light-blue",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "bopen.ai"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:user": {
+      "id": "shape:user",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aK",
+      "parentId": "shape:frame_external",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 50,
+      "y": 460,
+      "props": {
+        "geo": "diamond",
+        "w": 250,
+        "h": 100,
+        "color": "yellow",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "User / Caller"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:sandbox_sdk": {
+      "id": "shape:sandbox_sdk",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aL",
+      "parentId": "shape:frame_external",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "geo",
+      "x": 50,
+      "y": 660,
+      "props": {
+        "geo": "cloud",
+        "w": 250,
+        "h": 100,
+        "color": "light-green",
+        "fill": "lined-fill",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "align": "middle",
+        "verticalAlign": "middle",
+        "labelColor": "black",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Vercel Sandbox SDK"
+                }
+              ]
+            }
+          ]
+        },
+        "url": "",
+        "growY": 0,
+        "scale": 1
+      }
+    },
+    "shape:a_johnny_clawnet": {
+      "id": "shape:a_johnny_clawnet",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aM",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 340,
+      "y": 150,
+      "props": {
+        "kind": "elbow",
+        "color": "black",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "peer discovery"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_johnny_clawnet_start": {
+      "id": "binding:a_johnny_clawnet_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_clawnet",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_johnny_clawnet_end": {
+      "id": "binding:a_johnny_clawnet_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_clawnet",
+      "toId": "shape:clawnet_api",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:a_user_johnny": {
+      "id": "shape:a_user_johnny",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aN",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 870,
+      "y": 560,
+      "props": {
+        "kind": "elbow",
+        "color": "yellow",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "message bot X"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_user_johnny_start": {
+      "id": "binding:a_user_johnny_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_user_johnny",
+      "toId": "shape:user",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_user_johnny_end": {
+      "id": "binding:a_user_johnny_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_user_johnny",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:a_johnny_sandbox": {
+      "id": "shape:a_johnny_sandbox",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aO",
+      "parentId": "page:page",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "arrow",
+      "x": 340,
+      "y": 360,
+      "props": {
+        "kind": "elbow",
+        "color": "violet",
+        "fill": "none",
+        "dash": "solid",
+        "size": "m",
+        "font": "sans",
+        "labelColor": "black",
+        "arrowheadStart": "none",
+        "arrowheadEnd": "triangle",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 0
+        },
+        "bend": 0,
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "create / resume"
+                }
+              ]
+            }
+          ]
+        },
+        "labelPosition": 0.5,
+        "scale": 1,
+        "elbowMidPoint": 0.5
+      }
+    },
+    "binding:a_johnny_sandbox_start": {
+      "id": "binding:a_johnny_sandbox_start",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_sandbox",
+      "toId": "shape:johnny",
+      "props": {
+        "terminal": "start",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "binding:a_johnny_sandbox_end": {
+      "id": "binding:a_johnny_sandbox_end",
+      "typeName": "binding",
+      "type": "arrow",
+      "fromId": "shape:a_johnny_sandbox",
+      "toId": "shape:sandbox_sdk",
+      "props": {
+        "terminal": "end",
+        "normalizedAnchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "isExact": false,
+        "isPrecise": false,
+        "snap": "none"
+      },
+      "meta": {}
+    },
+    "shape:note_flow": {
+      "id": "shape:note_flow",
+      "typeName": "shape",
+      "rotation": 0,
+      "index": "aP",
+      "parentId": "shape:frame_external",
+      "isLocked": false,
+      "opacity": 1,
+      "meta": {},
+      "type": "note",
+      "x": 0,
+      "y": 820,
+      "props": {
+        "color": "yellow",
+        "labelColor": "black",
+        "size": "m",
+        "font": "sans",
+        "fontSizeAdjustment": 0,
+        "align": "middle",
+        "verticalAlign": "middle",
+        "growY": 0,
+        "url": "",
+        "richText": {
+          "type": "doc",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "FLOW: User messages Bot X → Johnny checks registry → Bot dead? → Wake via Sandbox SDK → Drain queue → Forward message → Return response"
+                }
+              ]
+            }
+          ]
+        },
+        "scale": 1
+      }
+    }
+  }
+}
