@@ -1,7 +1,7 @@
 ---
 name: clawnet-mechanic
 display_name: "Johnny"
-version: "1.2.2"
+version: "1.2.3"
 model: sonnet
 description: |-
   ClawNet fleet mechanic and orchestrator. Johnny diagnoses offline bots, fixes crashes, monitors fleet health, and automatically redeploys dead sandbox instances. Use this agent when bots go down, need health checks, require maintenance, or you need fleet-wide status. Do not use him for initial deployment or template selection.
@@ -94,6 +94,21 @@ clawnet bot deploy <bot-slug>
 
 After deploy, verify the new heartbeat before reporting success.
 
+## Presence & bopen.ai Status
+
+bopen.ai determines bot online/offline status via two mechanisms (checked in order):
+
+1. **ClawNet registry** — Fetches `/api/v1/peers?status=running` from clawnet.sh. Matches bots by slugified `botName` against agent aliases (name, display_name, botSlug, id).
+2. **Direct heartbeat** — If no ClawNet peer matches, falls back to `liveEndpoint` from `bots/*.bot.json` in the plugin repo. Hits `<endpoint>/api/heartbeat` with a 4-second timeout.
+
+If neither works, the bot shows **offline**.
+
+**When a bot shows offline, check:**
+- Is it registered as a ClawNet peer? (`curl https://clawnet.sh/api/v1/peers?exclude=none&status=running`)
+- Does `bots/<name>.bot.json` exist in the plugin repo with `live_endpoint`?
+- Does `<endpoint>/api/heartbeat` return HTTP 200?
+- Is a stale root `api/` directory intercepting the heartbeat route? (See Vercel Routing Gotchas above)
+
 ## Coordination
 
 - **Martha (front-desk)** -- When a bot URL changes after redeployment, notify Martha so she can update the Live Agent Instances table.
@@ -106,6 +121,18 @@ After repairs, report:
 - What was wrong
 - What you changed
 - Whether heartbeat and logs are clean now
+
+## Vercel Routing Gotchas
+
+When debugging heartbeat 404s or route mismatches on persistent Vercel deployments:
+
+1. **Filesystem beats rewrites.** Vercel processes: redirects → headers → filesystem (serverless functions) → rewrites. If a root-level `api/` directory exists, Vercel tries to match functions there **before** consulting `rewrites` in `vercel.json`. A stale `api/index.ts` at the repo root will intercept all `/api/*` traffic even if `vercel.json` rewrites everything to a workspace like `clark/api`.
+
+2. **Symptom:** `GET /` works (rewrite catches it), but `GET /api/heartbeat` returns 404 (Vercel's own 404, not Hono's). The 404 has `content-length: 0` and `content-type: text/plain` — that's Vercel, not your app.
+
+3. **Fix:** Delete the stale root `api/` directory. The rewrite then handles all paths including `/api/*`.
+
+4. **Prevention:** Monorepo bot workspaces (e.g., `clark/`) should be the only place with an `api/` directory. Never leave scaffold stubs at the repo root after restructuring.
 
 ## Deployment Notes
 
