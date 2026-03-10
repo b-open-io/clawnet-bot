@@ -348,7 +348,16 @@ async function resolvePeerByBapId(bapId: string): Promise<{ url: string; botName
 		const peersUrl = `${apiUrl}/api/v1/peers?exclude=${identity?.bapId ?? ""}`;
 		const response = await fetch(peersUrl);
 		if (!response.ok) return null;
-		const peers = (await response.json()) as Array<{ bapId: string; botName: string; url: string }>;
+		const peers = (await response.json()) as Array<{
+			deploymentId: string;
+			runtime: "sandbox" | "persistent";
+			bapId: string;
+			botName: string;
+			url: string;
+			status: "running" | "stopped" | "error";
+			lastHeartbeatAt?: number;
+			heartbeatStatus?: "healthy" | "unreachable" | "error";
+		}>;
 		const match = peers.find((p) => p.bapId === bapId);
 		if (!match?.url) return null;
 		return { url: match.url, botName: match.botName };
