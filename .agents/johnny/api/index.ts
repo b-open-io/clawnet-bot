@@ -1,5 +1,5 @@
-import { app } from "../src/index.ts";
-
 export default {
-	fetch: app.fetch,
+	async fetch(request: Request): Promise<Response> {
+		return Response.json({ name: "johnny", status: "ok", runtime: "bun" });
+	},
 };
