@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 import { Sandbox } from "@vercel/sandbox";
 import { gateway, generateText, streamText, type ToolSet, tool } from "ai";
 import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
-import { loadAgentSource, parseAgentDefinition } from "clawnet/src/commands/bot/agent-source.ts";
-import { notifyRegistry } from "clawnet/src/commands/bot/registry-hook.ts";
-import { ensureBunSnapshot } from "clawnet/src/commands/bot/snapshot.ts";
+import { loadAgentSource, parseAgentDefinition } from "clawnet/src/commands/bot/agent-source.js";
+import { notifyRegistry } from "clawnet/src/commands/bot/registry-hook.js";
+import { ensureBunSnapshot } from "clawnet/src/commands/bot/snapshot.js";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 
