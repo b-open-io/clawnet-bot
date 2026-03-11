@@ -17,7 +17,6 @@
 		"zod": "^3.25.0"
 	},
 	"devDependencies": {
-		"@vercel/node": "^5.1.8",
 		"@biomejs/biome": "^2.4.4",
 		"@types/bun": "latest",
 		"typescript": "^5.9.3"
