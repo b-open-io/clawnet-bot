@@ -1,3 +1,5 @@
 import { app } from "../src/index.ts";
 
-export default app.fetch;
+export default {
+	fetch: app.fetch,
+};
