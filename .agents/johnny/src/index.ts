@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { Sandbox } from "@vercel/sandbox";
 import { gateway, generateText, streamText, type ToolSet, tool } from "ai";
 import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
+import { ensureBunSnapshot } from "clawnet/src/commands/bot/snapshot.ts";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
 
@@ -31,9 +32,7 @@ if (existsSync(skillsDir)) {
 
 // --- Fleet Configuration ---
 
-const REPO_URL = "https://github.com/b-open-io/clawnet-bot.git";
 const SANDBOX_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-const BUN_SNAPSHOT_ID = "snap_KNADaU2YAE1XfrosRhWir4ZsLa4w";
 
 type InfisicalConfig = {
 	clientId: string;
@@ -43,6 +42,7 @@ type InfisicalConfig = {
 };
 
 type BotConfig = {
+	repo: string;
 	workspace: string;
 	port: number;
 	description: string;
@@ -51,9 +51,10 @@ type BotConfig = {
 
 const FLEET_ROSTER: Record<string, BotConfig> = {
 	clark: {
+		repo: "b-open-io/clawbook-bot",
 		workspace: ".agents/clark",
 		port: 3000,
-		description: "ClawNet/ClawBook network observer and X outreach operator",
+		description: "ClawBook.network social bot",
 		infisical: {
 			clientId: "7f7ad2db-e6ed-42ce-85df-3e66660391f5",
 			projectId: "2241507a-df38-40f4-bd8d-c267b13de35e",
@@ -111,7 +112,10 @@ async function checkHeartbeat(endpoint: string): Promise<{ alive: boolean; laten
 
 async function resumeSandbox(
 	sandboxId: string,
+	opts?: { workspace?: string; port?: number },
 ): Promise<{ ok: boolean; sandboxId: string; url?: string; error?: string }> {
+	const workspace = opts?.workspace ? `/app/${opts.workspace}` : "/app";
+	const port = opts?.port ?? 3000;
 	try {
 		const sandbox = await Sandbox.get({ sandboxId });
 		try {
@@ -123,9 +127,9 @@ async function resumeSandbox(
 			cmd: "bash",
 			args: ["-lc", "bun run src/index.ts"],
 			detached: true,
-			cwd: "/app",
+			cwd: workspace,
 		});
-		const url = sandbox.domain(3000);
+		const url = sandbox.domain(port);
 		return { ok: true, sandboxId, url };
 	} catch (err) {
 		const message = err instanceof Error ? err.message : "Unknown error";
@@ -141,11 +145,14 @@ async function createFreshSandbox(
 		const known = Object.keys(FLEET_ROSTER);
 		return {
 			ok: false,
-			error: `"${botName}" is not in the deploy roster. Known bots: ${known.join(", ") || "none"}. Only bots with workspaces in the clawnet-bot repo can be deployed fresh.`,
+			error: `"${botName}" is not in the deploy roster. Known bots: ${known.join(", ") || "none"}.`,
 		};
 	}
 
 	try {
+		// Get a valid Bun snapshot (handles TTL, caching, auto-rebuild)
+		const snapshotId = await ensureBunSnapshot();
+
 		// Forward only Infisical auth credentials — the bot pulls its own secrets at boot
 		const env: Record<string, string> = {
 			INFISICAL_CLIENT_ID: config.infisical.clientId,
@@ -165,22 +172,22 @@ async function createFreshSandbox(
 		env.INFISICAL_CLIENT_SECRET = clientSecret;
 		env.WORKSPACE = `/app/${config.workspace}`;
 
-		// Create sandbox from Bun snapshot (bun is pre-installed in the snapshot)
+		// Create sandbox from Bun snapshot
 		const sandbox = await Sandbox.create({
-			source: { type: "snapshot", snapshotId: BUN_SNAPSHOT_ID },
+			source: { type: "snapshot", snapshotId },
 			ports: [config.port],
 			timeout: SANDBOX_TIMEOUT_MS,
 			env,
 		});
 
-		// Clone the repo into the sandbox
+		// Clone the bot's own repo into the sandbox
 		const ghToken = process.env.GITHUB_TOKEN?.trim();
-		const cloneUrl = ghToken
-			? `https://x-access-token:${ghToken}@github.com/b-open-io/clawnet-bot.git`
-			: REPO_URL;
+		const repoUrl = ghToken
+			? `https://x-access-token:${ghToken}@github.com/${config.repo}.git`
+			: `https://github.com/${config.repo}.git`;
 		await sandbox.runCommand({
 			cmd: "bash",
-			args: ["-lc", `git clone --depth 1 ${cloneUrl} /app`],
+			args: ["-lc", `git clone --depth 1 ${repoUrl} /app`],
 		});
 
 		// Install deps and boot with Infisical secret injection
@@ -192,7 +199,7 @@ async function createFreshSandbox(
 		});
 		await sandbox.runCommand({
 			cmd: "bash",
-			args: ["/app/scripts/boot-with-secrets.sh"],
+			args: ["-lc", "bash /app/scripts/boot-with-secrets.sh"],
 			detached: true,
 			cwd: workspace,
 		});
@@ -244,7 +251,8 @@ async function wakeBot(botName: string): Promise<{
 
 			// Step 2: Try to resume existing sandbox
 			if (sandboxId) {
-				const result = await resumeSandbox(sandboxId);
+				const rosterConfig = FLEET_ROSTER[botName.toLowerCase()];
+				const result = await resumeSandbox(sandboxId, rosterConfig);
 				if (result.ok) {
 					return { bot: botName, action: "resumed", url: result.url, sandboxId };
 				}
@@ -313,13 +321,13 @@ const fleetTools: ToolSet = {
 
 	list_deployable: tool({
 		description:
-			"List bots that Johnny can deploy fresh. These are bots with workspaces in the clawnet-bot repo. Other bots may be visible in the peers API but can only be resumed, not redeployed from scratch.",
+			"List bots that Johnny can deploy fresh from their own repos. Other bots may be visible in the peers API but can only be resumed, not redeployed from scratch.",
 		inputSchema: z.object({}),
 		execute: async () => ({
 			bots: Object.entries(FLEET_ROSTER).map(([name, config]) => ({
 				name,
+				repo: config.repo,
 				description: config.description,
-				workspace: config.workspace,
 			})),
 		}),
 	}),

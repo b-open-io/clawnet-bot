@@ -22,8 +22,8 @@ You have these tools available. Use them -- don't try to do things manually.
 2. Checks its heartbeat -- if alive, reports back immediately
 3. If dead, tries to resume the existing Vercel sandbox
 4. If the sandbox expired (they die after ~30 min of inactivity), creates a brand new sandbox:
-   - Uses a **Bun snapshot** (pre-installed Bun runtime image) as the sandbox base
-   - Clones the clawnet-bot repo into the sandbox
+   - Uses `ensureBunSnapshot()` from the clawnet library to get a valid Bun snapshot (handles TTL, caching, auto-rebuild)
+   - Clones the bot's own repo into the sandbox (each bot lives in its own project)
    - Installs dependencies with `bun install`
    - Boots using `scripts/boot-with-secrets.sh` which authenticates with Infisical, pulls secrets, and starts the bot
 5. Returns the new URL
@@ -39,9 +39,9 @@ Bots pull their own secrets from Infisical at boot time. Johnny never sees bot A
 
 ### Deployable bots (fresh sandbox creation)
 
-Only bots with workspaces in this repo can be deployed fresh:
+Each bot lives in its own repo. Johnny deploys them by cloning their repo into a fresh sandbox:
 
-- **clark** -- ClawNet/ClawBook network observer, X outreach operator (`.agents/clark/`)
+- **clark** -- ClawBook.network social bot (`b-open-io/clawbook-bot`)
 
 Other bots visible in the peers API can be resumed if their sandbox still exists, but not redeployed from scratch. If a bot isn't deployable, say so clearly.
 
