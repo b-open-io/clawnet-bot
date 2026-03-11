@@ -1,5 +1,4 @@
-import { openai } from "@ai-sdk/openai";
-import { generateText, streamText } from "ai";
+import { gateway, generateText, streamText } from "ai";
 import { Hono } from "hono";
 
 const app = new Hono();
@@ -100,7 +99,7 @@ function parseAgentRequest(value: unknown): AgentRequest | null {
 }
 
 function ensureAiConfig() {
-	const apiKey = process.env.OPENAI_API_KEY?.trim();
+	const apiKey = process.env.AI_GATEWAY_API_KEY?.trim();
 	if (!apiKey) {
 		return {
 			ok: false as const,
@@ -110,7 +109,7 @@ function ensureAiConfig() {
 
 	return {
 		ok: true as const,
-		model: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
+		model: process.env.AI_GATEWAY_MODEL?.trim() || "anthropic/claude-sonnet-4-6",
 	};
 }
 
@@ -255,7 +254,7 @@ app.post("/api/agent", async (c) => {
 	try {
 		if (request.stream) {
 			const result = streamText({
-				model: openai(aiConfig.model),
+				model: gateway(aiConfig.model),
 				system: request.system || DEFAULT_SYSTEM_PROMPT,
 				prompt: request.message,
 			});
@@ -267,11 +266,11 @@ app.post("/api/agent", async (c) => {
 				durationMs: Date.now() - startedAt,
 			});
 
-			return result.toDataStreamResponse();
+			return result.toTextStreamResponse();
 		}
 
 		const result = await generateText({
-			model: openai(aiConfig.model),
+			model: gateway(aiConfig.model),
 			system: request.system || DEFAULT_SYSTEM_PROMPT,
 			prompt: request.message,
 		});

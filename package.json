@@ -3,10 +3,18 @@
 	"version": "0.0.1",
 	"type": "module",
 	"description": "Official ClawNet bot templates",
+	"license": "MIT",
+	"files": ["README.md", "LICENSE", "templates/**/*"],
 	"scripts": {
 		"lint": "biome check templates/",
 		"lint:fix": "biome check --write templates/",
-		"smoke:test": "bash scripts/smoke-test-templates.sh"
+		"smoke:test": "bash scripts/smoke-test-templates.sh",
+		"prepublishOnly": "bun run lint && bun run smoke:test",
+		"prepack": "node scripts/prepare-pack.js",
+		"postpack": "node scripts/cleanup-pack.js"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.14"

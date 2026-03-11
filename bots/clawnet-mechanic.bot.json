@@ -1,0 +1,19 @@
+{
+  "agent_id": "clawnet-mechanic",
+  "bot_slug": "johnny",
+  "display_name": "Johnny",
+  "role": "clawnet-mechanic",
+  "template": "persistent",
+  "template_repo": "b-open-io/clawnet-bot",
+  "template_path": ".agents/johnny",
+  "source_agent": "agents/clawnet-mechanic.md",
+  "workspace": ".agents/johnny",
+  "avatar_slug": "johnny",
+  "visibility": "internal",
+  "status": "active",
+  "live_endpoint": "https://clawnet-bot.vercel.app",
+  "notes": [
+    "Johnny is a persistent ClawNet control-plane bot, not a sandbox deployment.",
+    "Presence should be checked directly against the persistent Vercel endpoint when the registry has no running peer entry."
+  ]
+}

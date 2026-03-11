@@ -182,7 +182,7 @@ app.post("/api/chat", async (c) => {
 			model: modelConfig.getModel(),
 			prompt,
 		});
-		return result.toDataStreamResponse();
+		return result.toTextStreamResponse();
 	} catch {
 		return c.json({ success: false, error: "Failed to stream chat response." }, 502);
 	}
@@ -222,7 +222,7 @@ app.post("/api/agent", async (c) => {
 			prompt,
 		});
 
-		return result.toDataStreamResponse();
+		return result.toTextStreamResponse();
 	} catch {
 		return c.json({ success: false, error: "Failed to stream agent response." }, 502);
 	}

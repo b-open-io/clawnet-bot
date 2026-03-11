@@ -128,6 +128,32 @@ Run a smoke test across all templates:
 bun run smoke:test
 ```
 
+## Secrets Management
+
+Bot secrets are managed through [Infisical](https://infisical.com). Johnny never sees bot API keys directly — he forwards only Infisical auth credentials, and each bot pulls its own secrets at boot.
+
+### Folder Structure
+
+| Path | Purpose | Who reads |
+|------|---------|-----------|
+| `/shared` | AI gateway key, shared config | All bots |
+| `/clark` | Clark-specific secrets | Clark |
+| `/johnny` | Johnny-specific secrets | Johnny |
+
+### How It Works
+
+1. Johnny holds Infisical client secrets for each bot (`INFISICAL_CLIENT_SECRET_<BOT>`)
+2. When creating a sandbox, Johnny passes only Infisical auth credentials as env vars
+3. The boot script (`scripts/boot-with-secrets.sh`) authenticates with the Infisical API and exports secrets as env vars
+4. The bot process starts with all secrets available in its environment
+
+### Adding a New Bot
+
+1. Create a folder in Infisical: `infisical secrets folders create --name <bot> --path / --env prod`
+2. Create a machine identity in the Infisical dashboard (Universal Auth, Viewer role on the clawnet project)
+3. Store the client secret on Johnny's Vercel: `INFISICAL_CLIENT_SECRET_<BOT>`
+4. Add the bot to `FLEET_ROSTER` in `.agents/johnny/src/index.ts`
+
 ## License
 
 MIT

@@ -57,6 +57,10 @@ run_template() {
 	fi
 
 	if [[ "$template" == "vercel-ai" ]]; then
+		ANTHROPIC_API_KEY="" OPENAI_API_KEY="" PORT="$port" bun run src/index.ts >server.log 2>&1 &
+	elif [[ "$template" == "gateway" ]]; then
+		AI_GATEWAY_API_KEY="" PORT="$port" bun run src/index.ts >server.log 2>&1 &
+	elif [[ "$template" == "clark" ]]; then
 		OPENAI_API_KEY="" PORT="$port" bun run src/index.ts >server.log 2>&1 &
 	elif [[ -n "$wif" ]]; then
 		SIGMA_MEMBER_PRIVATE_KEY="$wif" PORT="$port" bun run src/index.ts >server.log 2>&1 &
@@ -96,6 +100,22 @@ run_template() {
 			fi
 			assert_contains "$body" "OPENAI_API_KEY"
 			;;
+		gateway)
+			response="$(curl -sS -X POST "http://127.0.0.1:${port}/api/agent" -H "Content-Type: application/json" -d '{"message":"hello"}' -w $'\n%{http_code}')"
+			local status="${response##*$'\n'}"
+			local body="${response%$'\n'*}"
+			if [[ "$status" != "503" ]]; then
+				echo "Expected gateway to return 503 when AI_GATEWAY_API_KEY is unset, got ${status}." >&2
+				echo "Response: ${body}" >&2
+				return 1
+			fi
+			assert_contains "$body" "AI_GATEWAY_API_KEY"
+			;;
+		clark)
+			response="$(curl -fsS -X POST "http://127.0.0.1:${port}/api/agent" -H "Content-Type: application/json" -d '{"message":"help me deploy"}')"
+			assert_contains "$response" '"success":true'
+			assert_contains "$response" '"mode":"deterministic"'
+			;;
 		chatter)
 			response="$(curl -fsS -X POST "http://127.0.0.1:${port}/api/agent" -H "Content-Type: application/json" -d '{"message":"hello from smoke"}')"
 			assert_contains "$response" '"success":true'
@@ -126,7 +146,9 @@ run_template "minimal" 4111
 run_template "blockchain" 4112
 run_template "moltbook" 4113
 run_template "vercel-ai" 4114
-run_template "chatter" 4115
-run_template "x-poster" 4116
+run_template "gateway" 4115
+run_template "clark" 4116
+run_template "chatter" 4117
+run_template "x-poster" 4118
 
 echo "All template smoke tests passed."

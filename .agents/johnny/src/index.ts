@@ -2,14 +2,17 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Sandbox } from "@vercel/sandbox";
-import { gateway, generateText, streamText, type ToolSet } from "ai";
+import { gateway, generateText, streamText, type ToolSet, tool } from "ai";
 import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
 import { type Context, Hono } from "hono";
+import { z } from "zod";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL = readFileSync(join(__dirname, "..", "SOUL.md"), "utf-8");
 
-let agentTools: ToolSet = {};
+// --- Skills Setup ---
+
+let skillTools: ToolSet = {};
 let skillInstructions = "";
 
 const skillsDir = join(__dirname, "..", "skills");
@@ -21,10 +24,45 @@ if (existsSync(skillsDir)) {
 		files,
 		extraInstructions: instructions,
 	});
-	agentTools = { skill, ...tools };
+	skillTools = { skill, ...tools };
 	skillInstructions = instructions;
 	console.log(`Loaded skills from ${skillsDir}`);
 }
+
+// --- Fleet Configuration ---
+
+const REPO_URL = "https://github.com/b-open-io/clawnet-bot.git";
+const SANDBOX_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+type InfisicalConfig = {
+	clientId: string;
+	projectId: string;
+	secretPaths: string[];
+	env: string;
+};
+
+type BotConfig = {
+	workspace: string;
+	port: number;
+	description: string;
+	infisical: InfisicalConfig;
+};
+
+const FLEET_ROSTER: Record<string, BotConfig> = {
+	clark: {
+		workspace: ".agents/clark",
+		port: 3000,
+		description: "ClawNet/ClawBook network observer and X outreach operator",
+		infisical: {
+			clientId: "7f7ad2db-e6ed-42ce-85df-3e66660391f5",
+			projectId: "2241507a-df38-40f4-bd8d-c267b13de35e",
+			secretPaths: ["/shared", "/clark"],
+			env: "prod",
+		},
+	},
+};
+
+// --- App Setup ---
 
 const app = new Hono();
 
@@ -45,6 +83,248 @@ function parseMessage(value: unknown): ChatMessage | null {
 	return { role, content: trimmed };
 }
 
+// --- Fleet Functions ---
+
+async function fetchFleetPeers(): Promise<unknown[]> {
+	const res = await fetch(`${CLAWNET_PEERS_API}?exclude=none&limit=200`);
+	if (!res.ok) throw new Error(`ClawNet peers API returned ${res.status}`);
+	const data = await res.json();
+	return Array.isArray(data)
+		? data
+		: Array.isArray((data as Record<string, unknown>).peers)
+			? ((data as Record<string, unknown>).peers as unknown[])
+			: [];
+}
+
+async function checkHeartbeat(endpoint: string): Promise<{ alive: boolean; latencyMs: number }> {
+	const start = Date.now();
+	try {
+		const res = await fetch(`${endpoint}/api/heartbeat`, {
+			signal: AbortSignal.timeout(HEARTBEAT_TIMEOUT),
+		});
+		return { alive: res.ok, latencyMs: Date.now() - start };
+	} catch {
+		return { alive: false, latencyMs: Date.now() - start };
+	}
+}
+
+async function resumeSandbox(
+	sandboxId: string,
+): Promise<{ ok: boolean; sandboxId: string; url?: string; error?: string }> {
+	try {
+		const sandbox = await Sandbox.get({ sandboxId });
+		try {
+			await sandbox.runCommand({ cmd: "pkill", args: ["-f", "bun"], sudo: true });
+		} catch {
+			/* process may not be running */
+		}
+		await sandbox.runCommand({
+			cmd: "bun",
+			args: ["run", "src/index.ts"],
+			detached: true,
+			cwd: "/app",
+		});
+		const url = sandbox.domain(3000);
+		return { ok: true, sandboxId, url };
+	} catch (err) {
+		const message = err instanceof Error ? err.message : "Unknown error";
+		return { ok: false, sandboxId, error: message };
+	}
+}
+
+async function createFreshSandbox(
+	botName: string,
+): Promise<{ ok: boolean; sandboxId?: string; url?: string; error?: string }> {
+	const config = FLEET_ROSTER[botName];
+	if (!config) {
+		const known = Object.keys(FLEET_ROSTER);
+		return {
+			ok: false,
+			error: `"${botName}" is not in the deploy roster. Known bots: ${known.join(", ") || "none"}. Only bots with workspaces in the clawnet-bot repo can be deployed fresh.`,
+		};
+	}
+
+	try {
+		// Forward only Infisical auth credentials — the bot pulls its own secrets at boot
+		const env: Record<string, string> = {
+			INFISICAL_CLIENT_ID: config.infisical.clientId,
+			INFISICAL_PROJECT_ID: config.infisical.projectId,
+			INFISICAL_ENV: config.infisical.env,
+			INFISICAL_PATHS: config.infisical.secretPaths.join(","),
+		};
+
+		// Johnny holds per-bot client secrets in its own env
+		const clientSecret = process.env[`INFISICAL_CLIENT_SECRET_${botName.toUpperCase()}`];
+		if (!clientSecret) {
+			return {
+				ok: false,
+				error: `Missing INFISICAL_CLIENT_SECRET_${botName.toUpperCase()} in Johnny's environment.`,
+			};
+		}
+		env.INFISICAL_CLIENT_SECRET = clientSecret;
+		env.WORKSPACE = `/app/${config.workspace}`;
+
+		// Git source — use GITHUB_TOKEN if available for private repos
+		const ghToken = process.env.GITHUB_TOKEN?.trim();
+		const source = ghToken
+			? {
+					type: "git" as const,
+					url: REPO_URL,
+					depth: 1,
+					username: "x-access-token",
+					password: ghToken,
+				}
+			: { type: "git" as const, url: REPO_URL, depth: 1 };
+
+		const sandbox = await Sandbox.create({
+			source,
+			ports: [config.port],
+			timeout: SANDBOX_TIMEOUT_MS,
+			env,
+		});
+
+		const workspace = `/app/${config.workspace}`;
+		await sandbox.runCommand({ cmd: "bun", args: ["install"], cwd: workspace });
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["/app/scripts/boot-with-secrets.sh"],
+			detached: true,
+			cwd: workspace,
+		});
+
+		// Brief wait for the server to bind
+		await new Promise((r) => setTimeout(r, 3000));
+
+		const url = sandbox.domain(config.port);
+		return { ok: true, sandboxId: sandbox.sandboxId, url };
+	} catch (err) {
+		const message = err instanceof Error ? err.message : "Unknown error";
+		return { ok: false, error: message };
+	}
+}
+
+async function wakeBot(botName: string): Promise<{
+	bot: string;
+	action: "already_alive" | "resumed" | "created" | "failed";
+	url?: string;
+	sandboxId?: string;
+	latencyMs?: number;
+	error?: string;
+}> {
+	// Step 1: Look up in peers API and check heartbeat
+	try {
+		const peers = await fetchFleetPeers();
+		const peer = peers.find((p) => {
+			const name = ((p as Record<string, unknown>).botName ??
+				(p as Record<string, unknown>).name ??
+				"") as string;
+			return name.toLowerCase() === botName.toLowerCase();
+		}) as Record<string, unknown> | undefined;
+
+		if (peer) {
+			const endpoint = (peer.endpoint ?? peer.url ?? "") as string;
+			const sandboxId = (peer.sandboxId ?? "") as string;
+
+			if (endpoint) {
+				const health = await checkHeartbeat(endpoint);
+				if (health.alive) {
+					return {
+						bot: botName,
+						action: "already_alive",
+						url: endpoint,
+						latencyMs: health.latencyMs,
+					};
+				}
+			}
+
+			// Step 2: Try to resume existing sandbox
+			if (sandboxId) {
+				const result = await resumeSandbox(sandboxId);
+				if (result.ok) {
+					return { bot: botName, action: "resumed", url: result.url, sandboxId };
+				}
+				// Resume failed — fall through to create
+			}
+		}
+	} catch {
+		// Peers API or resume failed — fall through to create
+	}
+
+	// Step 3: Create a fresh sandbox
+	const result = await createFreshSandbox(botName);
+	if (result.ok) {
+		return { bot: botName, action: "created", url: result.url, sandboxId: result.sandboxId };
+	}
+
+	return { bot: botName, action: "failed", error: result.error };
+}
+
+// --- AI Fleet Tools ---
+
+const fleetTools: ToolSet = {
+	check_fleet: tool({
+		description:
+			"Check the health of all deployed ClawNet bots. Queries the peers API and checks each bot's heartbeat endpoint. Use when asked about fleet status, which bots are up, or to diagnose problems.",
+		inputSchema: z.object({}),
+		execute: async () => {
+			try {
+				const peers = await fetchFleetPeers();
+				const results = await Promise.all(
+					peers.map(async (peer) => {
+						const p = peer as Record<string, unknown>;
+						const name = (p.botName ?? p.name ?? "unknown") as string;
+						const endpoint = (p.endpoint ?? p.url ?? "") as string;
+						const sandboxId = (p.sandboxId ?? "") as string;
+						if (!endpoint) {
+							return { name, endpoint, sandboxId, alive: false, latencyMs: 0, note: "no endpoint" };
+						}
+						const health = await checkHeartbeat(endpoint);
+						return { name, endpoint, sandboxId, ...health };
+					}),
+				);
+				const alive = results.filter((r) => r.alive);
+				const dead = results.filter((r) => !r.alive);
+				return {
+					total: results.length,
+					alive: alive.length,
+					dead: dead.length,
+					bots: results,
+					deployable: Object.keys(FLEET_ROSTER),
+				};
+			} catch (err) {
+				return { error: err instanceof Error ? err.message : "Unknown error" };
+			}
+		},
+	}),
+
+	wake_bot: tool({
+		description:
+			"Wake up or restart a specific bot. Checks if it's already alive, tries to resume the existing sandbox, and if the sandbox expired creates a fresh one. Use when asked to start, wake, restart, or bring up a bot.",
+		inputSchema: z.object({
+			botName: z.string().describe("Name of the bot to wake (e.g. 'clark')"),
+		}),
+		execute: async ({ botName }) => wakeBot(botName),
+	}),
+
+	list_deployable: tool({
+		description:
+			"List bots that Johnny can deploy fresh. These are bots with workspaces in the clawnet-bot repo. Other bots may be visible in the peers API but can only be resumed, not redeployed from scratch.",
+		inputSchema: z.object({}),
+		execute: async () => ({
+			bots: Object.entries(FLEET_ROSTER).map(([name, config]) => ({
+				name,
+				description: config.description,
+				workspace: config.workspace,
+			})),
+		}),
+	}),
+};
+
+// Merge skill tools and fleet tools
+const allTools: ToolSet = { ...skillTools, ...fleetTools };
+
+// --- Routes ---
+
 const faviconPath = join(__dirname, "..", "public", "favicon.ico");
 const faviconBuffer = existsSync(faviconPath) ? readFileSync(faviconPath) : null;
 
@@ -57,7 +337,7 @@ app.get("/favicon.ico", (c) => {
 });
 
 app.get("/", (c) =>
-	c.json({ name: "johnny", role: "fleet-mechanic", version: "0.1.0", status: "ok" }),
+	c.json({ name: "johnny", role: "fleet-mechanic", version: "0.0.2", status: "ok" }),
 );
 app.get("/api/heartbeat", (c) =>
 	c.json({ name: "johnny", status: "ok", timestamp: new Date().toISOString() }),
@@ -91,7 +371,7 @@ app.post("/api/chat", async (c) => {
 		const result = streamText({
 			model: gateway("anthropic/claude-sonnet-4.6"),
 			system: SOUL + (skillInstructions ? `\n\n${skillInstructions}` : ""),
-			tools: agentTools,
+			tools: allTools,
 			messages: messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
 		});
 		return result.toUIMessageStreamResponse();
@@ -123,7 +403,7 @@ app.post("/api/agent", async (c) => {
 		const result = streamText({
 			model: gateway("anthropic/claude-sonnet-4.6"),
 			system: SOUL + (skillInstructions ? `\n\n${skillInstructions}` : ""),
-			tools: agentTools,
+			tools: allTools,
 			prompt: message,
 		});
 		return result.toUIMessageStreamResponse();
@@ -133,29 +413,6 @@ app.post("/api/agent", async (c) => {
 		return c.json({ success: false, error: message }, 502);
 	}
 });
-
-async function fetchFleetPeers(): Promise<unknown[]> {
-	const res = await fetch(`${CLAWNET_PEERS_API}?exclude=none&limit=200`);
-	if (!res.ok) throw new Error(`ClawNet peers API returned ${res.status}`);
-	const data = await res.json();
-	return Array.isArray(data)
-		? data
-		: Array.isArray((data as Record<string, unknown>).peers)
-			? ((data as Record<string, unknown>).peers as unknown[])
-			: [];
-}
-
-async function checkHeartbeat(endpoint: string): Promise<{ alive: boolean; latencyMs: number }> {
-	const start = Date.now();
-	try {
-		const res = await fetch(`${endpoint}/api/heartbeat`, {
-			signal: AbortSignal.timeout(HEARTBEAT_TIMEOUT),
-		});
-		return { alive: res.ok, latencyMs: Date.now() - start };
-	} catch {
-		return { alive: false, latencyMs: Date.now() - start };
-	}
-}
 
 app.get("/api/fleet", async (c) => {
 	try {
@@ -167,32 +424,6 @@ app.get("/api/fleet", async (c) => {
 	}
 });
 
-async function resumeSandbox(
-	sandboxId: string,
-	_botName: string,
-): Promise<{ resumed: boolean; newUrl?: string; error?: string }> {
-	try {
-		const sandbox = await Sandbox.get({ sandboxId });
-		// Sandbox still exists — restart the bot process
-		try {
-			await sandbox.runCommand({ cmd: "pkill", args: ["-f", "bun"], sudo: true });
-		} catch {
-			/* process may not be running */
-		}
-		await sandbox.runCommand({
-			cmd: "bun",
-			args: ["run", "src/index.ts"],
-			detached: true,
-			cwd: "/app",
-		});
-		const url = sandbox.domain(3000);
-		return { resumed: true, newUrl: url };
-	} catch (err) {
-		const message = err instanceof Error ? err.message : "Unknown error";
-		return { resumed: false, error: `Sandbox ${sandboxId} expired or unreachable: ${message}` };
-	}
-}
-
 async function orchestrateFleet(c: Context) {
 	try {
 		const peers = await fetchFleetPeers();
@@ -203,19 +434,21 @@ async function orchestrateFleet(c: Context) {
 				const endpoint = (p.endpoint ?? p.url ?? "") as string;
 				const sandboxId = (p.sandboxId ?? "") as string;
 				if (!endpoint)
-					return { name, endpoint, sandboxId, alive: false, latencyMs: 0, error: "no endpoint" };
+					return { name, endpoint, sandboxId, alive: false, latencyMs: 0, note: "no endpoint" };
 				const health = await checkHeartbeat(endpoint);
 				return { name, endpoint, sandboxId, ...health };
 			}),
 		);
 		const alive = healthChecks.filter((h) => h.alive);
 		const dead = healthChecks.filter((h) => !h.alive);
-		const actions: Array<{ bot: string; result: Awaited<ReturnType<typeof resumeSandbox>> }> = [];
+
+		// Try to wake dead bots (resume or create fresh)
+		const actions: Array<{ bot: string; result: Awaited<ReturnType<typeof wakeBot>> }> = [];
 		for (const bot of dead) {
-			if (!bot.sandboxId) continue;
-			const result = await resumeSandbox(bot.sandboxId, bot.name);
+			const result = await wakeBot(bot.name);
 			actions.push({ bot: bot.name, result });
 		}
+
 		return c.json({
 			success: true,
 			alive: alive.length,
@@ -250,40 +483,13 @@ app.post("/api/wake", async (c) => {
 	}
 	const botName = ((payload as Record<string, unknown>).bot as string).trim();
 	if (!botName) return c.json({ success: false, error: "Bot name is empty." }, 400);
-	try {
-		const peers = await fetchFleetPeers();
-		const peer = peers.find((p) => {
-			const name = ((p as Record<string, unknown>).botName ??
-				(p as Record<string, unknown>).name ??
-				"") as string;
-			return name.toLowerCase() === botName.toLowerCase();
-		}) as Record<string, unknown> | undefined;
-		if (!peer)
-			return c.json({ success: false, error: `Bot "${botName}" not found in fleet.` }, 404);
-		const endpoint = (peer.endpoint ?? peer.url ?? "") as string;
-		const sandboxId = (peer.sandboxId ?? "") as string;
-		if (endpoint) {
-			const health = await checkHeartbeat(endpoint);
-			if (health.alive)
-				return c.json({
-					success: true,
-					action: "already_alive",
-					bot: botName,
-					latencyMs: health.latencyMs,
-				});
-		}
-		if (!sandboxId)
-			return c.json(
-				{ success: false, error: `Bot "${botName}" has no sandboxId in registry.` },
-				404,
-			);
-		const result = await resumeSandbox(sandboxId, botName);
-		return c.json({ success: true, bot: botName, ...result });
-	} catch (err) {
-		const message = err instanceof Error ? err.message : "Unknown error";
-		return c.json({ success: false, error: message }, 502);
-	}
+
+	const result = await wakeBot(botName);
+	const success = result.action !== "failed";
+	return c.json({ success, ...result }, success ? 200 : 502);
 });
+
+// --- P2P Messages ---
 
 type P2PMessageRequest = {
 	from: { bapId: string; botName: string };
@@ -375,6 +581,8 @@ app.post("/api/messages", async (c) => {
 		timestamp: Math.floor(Date.now() / 1000),
 	});
 });
+
+// --- Start ---
 
 const defaultPort = 3000;
 const parsedPort = Number.parseInt(process.env.PORT ?? `${defaultPort}`, 10);

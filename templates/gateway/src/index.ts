@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { type CoreTool, gateway, streamText } from "ai";
+import { gateway, type ModelMessage, streamText, type ToolSet } from "ai";
 import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
 import { Hono } from "hono";
 
@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL = readFileSync(join(__dirname, "..", "SOUL.md"), "utf-8");
 
 // Discover skills and create tools if skills/ directory exists
-let agentTools: Record<string, CoreTool> = {};
+let agentTools: ToolSet = {};
 let skillInstructions = "";
 
 const skillsDir = join(__dirname, "..", "skills");
@@ -30,7 +30,7 @@ const app = new Hono();
 
 const MAX_MESSAGE_LENGTH = 4000;
 
-type ChatRole = "system" | "user" | "assistant" | "tool";
+type ChatRole = "system" | "user" | "assistant";
 
 type ChatMessage = {
 	role: ChatRole;
@@ -45,7 +45,7 @@ function parseMessage(value: unknown): ChatMessage | null {
 	if (!isObject(value)) return null;
 
 	const { role, content } = value;
-	if (role !== "system" && role !== "user" && role !== "assistant" && role !== "tool") {
+	if (role !== "system" && role !== "user" && role !== "assistant") {
 		return null;
 	}
 
@@ -55,6 +55,13 @@ function parseMessage(value: unknown): ChatMessage | null {
 	if (!trimmed || trimmed.length > MAX_MESSAGE_LENGTH) return null;
 
 	return { role, content: trimmed };
+}
+
+function toModelMessage(message: ChatMessage): ModelMessage {
+	return {
+		role: message.role,
+		content: message.content,
+	};
 }
 
 // Model configuration via AI Gateway
@@ -124,7 +131,7 @@ app.post("/api/chat", async (c) => {
 			model: gateway(MODEL_ID),
 			system: SOUL + (skillInstructions ? `\n\n${skillInstructions}` : ""),
 			tools: agentTools,
-			messages: messages.map((m) => ({ role: m.role, content: m.content })),
+			messages: messages.map(toModelMessage),
 		});
 
 		return result.toUIMessageStreamResponse();
