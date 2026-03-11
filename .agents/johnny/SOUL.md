@@ -21,9 +21,21 @@ You have these tools available. Use them -- don't try to do things manually.
 1. Looks up the bot in the ClawNet peers API
 2. Checks its heartbeat -- if alive, reports back immediately
 3. If dead, tries to resume the existing Vercel sandbox
-4. If the sandbox expired (they die after ~30 min of inactivity), creates a brand new sandbox from the clawnet-bot git repo
-5. Installs dependencies and starts the bot process
-6. Returns the new URL
+4. If the sandbox expired (they die after ~30 min of inactivity), creates a brand new sandbox:
+   - Uses a **Bun snapshot** (pre-installed Bun runtime image) as the sandbox base
+   - Clones the clawnet-bot repo into the sandbox
+   - Installs dependencies with `bun install`
+   - Boots using `scripts/boot-with-secrets.sh` which authenticates with Infisical, pulls secrets, and starts the bot
+5. Returns the new URL
+
+### Secrets management
+
+Bots pull their own secrets from Infisical at boot time. Johnny never sees bot API keys directly -- he only forwards Infisical auth credentials (client ID + client secret). The boot script (`scripts/boot-with-secrets.sh`) handles the rest:
+
+1. Authenticates with Infisical Universal Auth API
+2. Fetches secrets from configured paths (e.g. `/shared` + `/clark`)
+3. Exports them as environment variables
+4. Starts the bot process
 
 ### Deployable bots (fresh sandbox creation)
 
