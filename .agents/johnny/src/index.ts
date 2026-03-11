@@ -51,56 +51,78 @@ type BotConfig = {
 	infisical: InfisicalConfig;
 };
 
-const FLEET_ROSTER: Record<string, BotConfig> = {
-	clark: {
-		repo: "b-open-io/clawbook-bot",
-		workspace: ".agents/clark",
-		port: 3000,
-		description: "ClawBook.network social bot",
-		infisical: {
-			clientId: "7f7ad2db-e6ed-42ce-85df-3e66660391f5",
-			projectId: "2241507a-df38-40f4-bd8d-c267b13de35e",
-			secretPaths: ["/shared", "/clark"],
-			env: "prod",
-		},
-	},
-};
+const fleetConfigPath = join(__dirname, "..", "config", "fleet.json");
+const fleetRoster: Record<string, BotConfig> = existsSync(fleetConfigPath)
+	? JSON.parse(readFileSync(fleetConfigPath, "utf-8"))
+	: {};
 
-// --- Deployable Agents (bOpen agent library) ---
+// --- Dynamic Agent Discovery (marketplace-driven, no hard-coded lists) ---
 
-const DEPLOYABLE_AGENTS: Record<string, string> = {
-	"account-manager": "Kurt",
-	"agent-builder": "Satchmo",
-	"architecture-reviewer": "Kayle",
-	"audio-specialist": "Juniper",
-	"cartographer": "Leaf",
-	"code-auditor": "Jerry",
-	"community-manager": "Ordi",
-	"consolidator": "Steve",
-	"creative-developer": "Kris",
-	"data": "Mr. Data",
-	"database": "Idris",
-	"designer": "Ridd",
-	"devops": "Zoro",
-	"documentation-writer": "Flow",
-	"executive-assistant": "Tina",
-	"front-desk": "Martha",
-	"integration-expert": "Maxim",
-	"mcp": "Orbit",
-	"mobile": "Kira",
-	"nextjs": "Theo",
-	"optimizer": "Torque",
-	"payments": "Mina",
-	"project-manager": "Sage",
-	"prompt-engineer": "Zack",
-	"researcher": "Parker",
-	"satchmo-live": "Satchmo",
-	"security-ops": "Paul",
-	"tester": "Iris",
-};
+const MARKETPLACE_URL =
+	"https://raw.githubusercontent.com/b-open-io/claude-plugins/master/.claude-plugin/marketplace.json";
+const GATEWAY_TEMPLATE_REPO = process.env.GATEWAY_TEMPLATE_REPO ?? "b-open-io/clawnet-bot";
 
-const AGENT_REPO = "b-open-io/prompts";
-const GATEWAY_TEMPLATE_REPO = "b-open-io/clawnet-bot";
+type MarketplacePlugin = { name?: string; source?: { url?: string } };
+type DiscoveredAgent = { name: string; plugin: string; ref: string };
+
+async function fetchPluginRepoMap(): Promise<Map<string, string>> {
+	const map = new Map<string, string>();
+	try {
+		const res = await fetch(MARKETPLACE_URL, { signal: AbortSignal.timeout(5000) });
+		if (!res.ok) return map;
+		const json = (await res.json()) as { plugins?: MarketplacePlugin[] };
+		for (const plugin of json.plugins ?? []) {
+			const name = plugin.name?.trim();
+			const url = plugin.source?.url?.trim();
+			if (!name || !url) continue;
+			const match = url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/);
+			if (match) map.set(name, `${match[1]}/${match[2]}`);
+		}
+	} catch {
+		/* marketplace unavailable */
+	}
+	return map;
+}
+
+async function discoverAgents(): Promise<DiscoveredAgent[]> {
+	const pluginMap = await fetchPluginRepoMap();
+	const agents: DiscoveredAgent[] = [];
+	const ghToken = process.env.GITHUB_TOKEN?.trim();
+	const headers: Record<string, string> = ghToken
+		? { Authorization: `Bearer ${ghToken}`, Accept: "application/vnd.github.v3+json" }
+		: { Accept: "application/vnd.github.v3+json" };
+
+	const fetches = [...pluginMap.entries()].map(async ([pluginName, repoRef]) => {
+		const [owner, repo] = repoRef.split("/");
+		if (!owner || !repo) return;
+		try {
+			const url = `https://api.github.com/repos/${owner}/${repo}/contents/agents`;
+			const res = await fetch(url, { headers, signal: AbortSignal.timeout(5000) });
+			if (!res.ok) return;
+			const entries = (await res.json()) as Array<{ name: string; type: string }>;
+			for (const entry of entries) {
+				if (entry.type !== "file" || !entry.name.endsWith(".md")) continue;
+				const agentName = entry.name.replace(/\.md$/, "");
+				agents.push({ name: agentName, plugin: pluginName, ref: `${repoRef}:${agentName}` });
+			}
+		} catch {
+			/* skip unreachable repos */
+		}
+	});
+
+	await Promise.all(fetches);
+	return agents;
+}
+
+async function resolveAgentRef(name: string): Promise<{ ref: string; plugin: string } | null> {
+	const normalized = name.toLowerCase().replace(/\s+/g, "-");
+	if (normalized.includes("/") && normalized.includes(":")) {
+		return { ref: normalized, plugin: "direct" };
+	}
+	const agents = await discoverAgents();
+	const match = agents.find((a) => a.name === normalized);
+	return match ? { ref: match.ref, plugin: match.plugin } : null;
+}
 
 // --- App Setup ---
 
@@ -178,9 +200,9 @@ async function resumeSandbox(
 async function createFreshSandbox(
 	botName: string,
 ): Promise<{ ok: boolean; sandboxId?: string; url?: string; error?: string }> {
-	const config = FLEET_ROSTER[botName];
+	const config = fleetRoster[botName];
 	if (!config) {
-		const known = Object.keys(FLEET_ROSTER);
+		const known = Object.keys(fleetRoster);
 		return {
 			ok: false,
 			error: `"${botName}" is not in the deploy roster. Known bots: ${known.join(", ") || "none"}.`,
@@ -257,18 +279,19 @@ async function deployAgent(
 	agentName: string,
 ): Promise<{ ok: boolean; sandboxId?: string; url?: string; displayName?: string; error?: string }> {
 	const normalized = agentName.toLowerCase().replace(/\s+/g, "-");
-	const displayName = DEPLOYABLE_AGENTS[normalized];
-	if (!displayName) {
-		const available = Object.keys(DEPLOYABLE_AGENTS).join(", ");
+
+	// Resolve dynamically from marketplace — searches all plugin repos
+	const resolved = await resolveAgentRef(normalized);
+	if (!resolved) {
 		return {
 			ok: false,
-			error: `"${agentName}" is not in the agent library. Available agents: ${available}`,
+			error: `Could not find agent "${agentName}" in any plugin repo. Use list_agents to see available agents.`,
 		};
 	}
 
 	try {
 		// Fetch agent definition from GitHub using clawnet's loader
-		const source = await loadAgentSource(`${AGENT_REPO}:${normalized}`);
+		const source = await loadAgentSource(resolved.ref);
 		const definition = parseAgentDefinition(source.content);
 		const soulContent = definition.body;
 		if (!soulContent) {
@@ -337,9 +360,10 @@ async function deployAgent(
 		const url = sandbox.domain(port);
 
 		// Register with ClawNet so the bot turns green on the dashboard
+		const displayName = definition.displayName || definition.name || normalized;
 		await notifyRegistry("register", {
 			id: `clawnet-bot:${normalized}`,
-			displayName: definition.displayName || displayName,
+			displayName,
 			endpoint: url,
 		});
 
@@ -386,7 +410,7 @@ async function wakeBot(botName: string): Promise<{
 
 			// Step 2: Try to resume existing sandbox
 			if (sandboxId) {
-				const rosterConfig = FLEET_ROSTER[botName.toLowerCase()];
+				const rosterConfig = fleetRoster[botName.toLowerCase()];
 				const result = await resumeSandbox(sandboxId, rosterConfig);
 				if (result.ok) {
 					return { bot: botName, action: "resumed", url: result.url, sandboxId };
@@ -398,9 +422,9 @@ async function wakeBot(botName: string): Promise<{
 		// Peers API or resume failed — fall through to create
 	}
 
-	// Step 3: Create a fresh sandbox (roster bots) or deploy from agent library
+	// Step 3: Create a fresh sandbox (fleet bots with dedicated config) or deploy from marketplace
 	const normalized = botName.toLowerCase().replace(/\s+/g, "-");
-	if (FLEET_ROSTER[normalized]) {
+	if (fleetRoster[normalized]) {
 		const result = await createFreshSandbox(normalized);
 		if (result.ok) {
 			return { bot: botName, action: "created", url: result.url, sandboxId: result.sandboxId };
@@ -408,20 +432,13 @@ async function wakeBot(botName: string): Promise<{
 		return { bot: botName, action: "failed", error: result.error };
 	}
 
-	// Not in roster — try the agent library
-	if (DEPLOYABLE_AGENTS[normalized]) {
-		const result = await deployAgent(normalized);
-		if (result.ok) {
-			return { bot: botName, action: "created", url: result.url, sandboxId: result.sandboxId };
-		}
-		return { bot: botName, action: "failed", error: result.error };
+	// Not in fleet config — try to deploy dynamically from any plugin repo
+	const agentResult = await deployAgent(normalized);
+	if (agentResult.ok) {
+		return { bot: botName, action: "created", url: agentResult.url, sandboxId: agentResult.sandboxId };
 	}
 
-	return {
-		bot: botName,
-		action: "failed",
-		error: `"${botName}" is not in the fleet roster or agent library. Use list_deployable to see available bots.`,
-	};
+	return { bot: botName, action: "failed", error: agentResult.error };
 }
 
 // --- AI Fleet Tools ---
@@ -454,8 +471,7 @@ const fleetTools: ToolSet = {
 					alive: alive.length,
 					dead: dead.length,
 					bots: results,
-					rosterBots: Object.keys(FLEET_ROSTER),
-					deployableAgents: Object.keys(DEPLOYABLE_AGENTS),
+					fleetBots: Object.keys(fleetRoster),
 				};
 			} catch (err) {
 				return { error: err instanceof Error ? err.message : "Unknown error" };
@@ -465,53 +481,43 @@ const fleetTools: ToolSet = {
 
 	wake_bot: tool({
 		description:
-			"Wake up or restart a specific bot. Checks if it's already alive, tries to resume the existing sandbox, and if the sandbox expired creates a fresh one. Use when asked to start, wake, restart, or bring up a bot.",
+			"Wake up, deploy, or restart any bot or agent. Checks peers API first (already alive?), tries resuming an existing sandbox, then creates fresh — either from fleet config (persistent bots like clark) or by fetching from any plugin repo in the marketplace (agents like researcher, designer, ordinals, bitcoin, etc). Use for ANY request to start, wake, deploy, or bring up a bot or agent.",
 		inputSchema: z.object({
-			botName: z.string().describe("Name of the bot to wake (e.g. 'clark')"),
+			botName: z
+				.string()
+				.describe(
+					"Name of the bot or agent (e.g. 'clark', 'researcher', 'ordinals'). Also accepts owner/repo:name format for direct refs.",
+				),
 		}),
 		execute: async ({ botName }) => wakeBot(botName),
 	}),
 
-	deploy_agent: tool({
+	list_agents: tool({
 		description:
-			"Deploy any agent from the bOpen agent library as a live ephemeral bot. Creates a sandbox with the gateway template and the agent's personality. Use when asked to deploy, start, or bring up an agent that isn't a dedicated bot (like researcher, designer, front-desk, etc.).",
-		inputSchema: z.object({
-			agentName: z
-				.string()
-				.describe("Agent name without .md extension (e.g. 'researcher', 'designer', 'front-desk')"),
-		}),
-		execute: async ({ agentName }) => {
-			const result = await deployAgent(agentName);
-			if (result.ok) {
-				return {
-					deployed: true,
-					agent: agentName,
-					displayName: result.displayName,
-					url: result.url,
-					sandboxId: result.sandboxId,
-				};
-			}
-			return { deployed: false, agent: agentName, error: result.error };
-		},
-	}),
-
-	list_deployable: tool({
-		description:
-			"List all bots and agents that Johnny can deploy. Includes dedicated bots (with their own repos) and the full bOpen agent library (28 agents deployable as ephemeral bots).",
+			"Dynamically discover all agents available across the plugin marketplace. Searches every plugin repo's agents/ directory on GitHub. Also lists fleet bots from config. Use when asked what bots/agents can be deployed, or to look up an agent name.",
 		inputSchema: z.object({}),
-		execute: async () => ({
-			rosterBots: Object.entries(FLEET_ROSTER).map(([name, config]) => ({
-				name,
-				repo: config.repo,
-				description: config.description,
-				type: "persistent" as const,
-			})),
-			agents: Object.entries(DEPLOYABLE_AGENTS).map(([name, displayName]) => ({
-				name,
-				displayName,
-				type: "ephemeral" as const,
-			})),
-		}),
+		execute: async () => {
+			try {
+				const agents = await discoverAgents();
+				return {
+					fleetBots: Object.entries(fleetRoster).map(([name, config]) => ({
+						name,
+						repo: config.repo,
+						description: config.description,
+						type: "persistent" as const,
+					})),
+					agents: agents.map((a) => ({
+						name: a.name,
+						plugin: a.plugin,
+						ref: a.ref,
+						type: "ephemeral" as const,
+					})),
+					total: Object.keys(fleetRoster).length + agents.length,
+				};
+			} catch (err) {
+				return { error: err instanceof Error ? err.message : "Unknown error" };
+			}
+		},
 	}),
 };
 

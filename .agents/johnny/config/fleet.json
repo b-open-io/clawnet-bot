@@ -1,0 +1,14 @@
+{
+	"clark": {
+		"repo": "b-open-io/clawbook-bot",
+		"workspace": ".agents/clark",
+		"port": 3000,
+		"description": "ClawBook.network social bot",
+		"infisical": {
+			"clientId": "7f7ad2db-e6ed-42ce-85df-3e66660391f5",
+			"projectId": "2241507a-df38-40f4-bd8d-c267b13de35e",
+			"secretPaths": ["/shared", "/clark"],
+			"env": "prod"
+		}
+	}
+}
