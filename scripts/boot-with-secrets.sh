@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Source bash profile so bun is in PATH (installed via snapshot)
+# shellcheck disable=SC1090
+source ~/.bash_profile 2>/dev/null || source ~/.bashrc 2>/dev/null || true
+
 # Boot script for ClawNet bots running in Vercel Sandboxes.
 # Authenticates with Infisical via REST API, fetches secrets from
 # one or more folder paths, exports them as env vars, then starts bun.

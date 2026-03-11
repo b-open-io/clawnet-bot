@@ -33,6 +33,7 @@ if (existsSync(skillsDir)) {
 
 const REPO_URL = "https://github.com/b-open-io/clawnet-bot.git";
 const SANDBOX_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const BUN_SNAPSHOT_ID = "snap_KNADaU2YAE1XfrosRhWir4ZsLa4w";
 
 type InfisicalConfig = {
 	clientId: string;
@@ -119,8 +120,8 @@ async function resumeSandbox(
 			/* process may not be running */
 		}
 		await sandbox.runCommand({
-			cmd: "bun",
-			args: ["run", "src/index.ts"],
+			cmd: "bash",
+			args: ["-lc", "bun run src/index.ts"],
 			detached: true,
 			cwd: "/app",
 		});
@@ -164,27 +165,31 @@ async function createFreshSandbox(
 		env.INFISICAL_CLIENT_SECRET = clientSecret;
 		env.WORKSPACE = `/app/${config.workspace}`;
 
-		// Git source — use GITHUB_TOKEN if available for private repos
-		const ghToken = process.env.GITHUB_TOKEN?.trim();
-		const source = ghToken
-			? {
-					type: "git" as const,
-					url: REPO_URL,
-					depth: 1,
-					username: "x-access-token",
-					password: ghToken,
-				}
-			: { type: "git" as const, url: REPO_URL, depth: 1 };
-
+		// Create sandbox from Bun snapshot (bun is pre-installed in the snapshot)
 		const sandbox = await Sandbox.create({
-			source,
+			source: { type: "snapshot", snapshotId: BUN_SNAPSHOT_ID },
 			ports: [config.port],
 			timeout: SANDBOX_TIMEOUT_MS,
 			env,
 		});
 
+		// Clone the repo into the sandbox
+		const ghToken = process.env.GITHUB_TOKEN?.trim();
+		const cloneUrl = ghToken
+			? `https://x-access-token:${ghToken}@github.com/b-open-io/clawnet-bot.git`
+			: REPO_URL;
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", `git clone --depth 1 ${cloneUrl} /app`],
+		});
+
+		// Install deps and boot with Infisical secret injection
 		const workspace = `/app/${config.workspace}`;
-		await sandbox.runCommand({ cmd: "bun", args: ["install"], cwd: workspace });
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", "bun install"],
+			cwd: workspace,
+		});
 		await sandbox.runCommand({
 			cmd: "bash",
 			args: ["/app/scripts/boot-with-secrets.sh"],
