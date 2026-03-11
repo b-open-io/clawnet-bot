@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { Sandbox } from "@vercel/sandbox";
 import { gateway, generateText, streamText, type ToolSet, tool } from "ai";
 import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
+import { loadAgentSource, parseAgentDefinition } from "clawnet/src/commands/bot/agent-source.ts";
+import { notifyRegistry } from "clawnet/src/commands/bot/registry-hook.ts";
 import { ensureBunSnapshot } from "clawnet/src/commands/bot/snapshot.ts";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
@@ -63,6 +65,42 @@ const FLEET_ROSTER: Record<string, BotConfig> = {
 		},
 	},
 };
+
+// --- Deployable Agents (bOpen agent library) ---
+
+const DEPLOYABLE_AGENTS: Record<string, string> = {
+	"account-manager": "Kurt",
+	"agent-builder": "Satchmo",
+	"architecture-reviewer": "Kayle",
+	"audio-specialist": "Juniper",
+	"cartographer": "Leaf",
+	"code-auditor": "Jerry",
+	"community-manager": "Ordi",
+	"consolidator": "Steve",
+	"creative-developer": "Kris",
+	"data": "Mr. Data",
+	"database": "Idris",
+	"designer": "Ridd",
+	"devops": "Zoro",
+	"documentation-writer": "Flow",
+	"executive-assistant": "Tina",
+	"front-desk": "Martha",
+	"integration-expert": "Maxim",
+	"mcp": "Orbit",
+	"mobile": "Kira",
+	"nextjs": "Theo",
+	"optimizer": "Torque",
+	"payments": "Mina",
+	"project-manager": "Sage",
+	"prompt-engineer": "Zack",
+	"researcher": "Parker",
+	"satchmo-live": "Satchmo",
+	"security-ops": "Paul",
+	"tester": "Iris",
+};
+
+const AGENT_REPO = "b-open-io/prompts";
+const GATEWAY_TEMPLATE_REPO = "b-open-io/clawnet-bot";
 
 // --- App Setup ---
 
@@ -215,6 +253,103 @@ async function createFreshSandbox(
 	}
 }
 
+async function deployAgent(
+	agentName: string,
+): Promise<{ ok: boolean; sandboxId?: string; url?: string; displayName?: string; error?: string }> {
+	const normalized = agentName.toLowerCase().replace(/\s+/g, "-");
+	const displayName = DEPLOYABLE_AGENTS[normalized];
+	if (!displayName) {
+		const available = Object.keys(DEPLOYABLE_AGENTS).join(", ");
+		return {
+			ok: false,
+			error: `"${agentName}" is not in the agent library. Available agents: ${available}`,
+		};
+	}
+
+	try {
+		// Fetch agent definition from GitHub using clawnet's loader
+		const source = await loadAgentSource(`${AGENT_REPO}:${normalized}`);
+		const definition = parseAgentDefinition(source.content);
+		const soulContent = definition.body;
+		if (!soulContent) {
+			return { ok: false, error: `Agent "${normalized}" has no content after frontmatter.` };
+		}
+
+		// Get a valid Bun snapshot
+		const snapshotId = await ensureBunSnapshot();
+
+		// Generic agents only need AI_GATEWAY_API_KEY — no Infisical
+		const aiGatewayKey = process.env.AI_GATEWAY_API_KEY?.trim();
+		if (!aiGatewayKey) {
+			return { ok: false, error: "Missing AI_GATEWAY_API_KEY in Johnny's environment." };
+		}
+
+		const env: Record<string, string> = {
+			AI_GATEWAY_API_KEY: aiGatewayKey,
+		};
+
+		const port = 3000;
+		const sandbox = await Sandbox.create({
+			source: { type: "snapshot", snapshotId },
+			ports: [port],
+			timeout: SANDBOX_TIMEOUT_MS,
+			env,
+		});
+
+		// Clone clawnet-bot repo for the gateway template
+		const ghToken = process.env.GITHUB_TOKEN?.trim();
+		const repoUrl = ghToken
+			? `https://x-access-token:${ghToken}@github.com/${GATEWAY_TEMPLATE_REPO}.git`
+			: `https://github.com/${GATEWAY_TEMPLATE_REPO}.git`;
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", `git clone --depth 1 ${repoUrl} /tmp/clawnet-bot`],
+		});
+
+		// Copy gateway template to workspace
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", "cp -r /tmp/clawnet-bot/templates/gateway /app/bot"],
+		});
+
+		// Write the agent's body as SOUL.md
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", `cat > /app/bot/SOUL.md << 'CLAWNET_EOF'\n${soulContent}\nCLAWNET_EOF`],
+		});
+
+		// Install dependencies and boot
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", "bun install"],
+			cwd: "/app/bot",
+		});
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", "bun run src/index.ts"],
+			detached: true,
+			cwd: "/app/bot",
+		});
+
+		// Wait for server to bind
+		await new Promise((r) => setTimeout(r, 3000));
+
+		const url = sandbox.domain(port);
+
+		// Register with ClawNet so the bot turns green on the dashboard
+		await notifyRegistry("register", {
+			id: `clawnet-bot:${normalized}`,
+			displayName: definition.displayName || displayName,
+			endpoint: url,
+		});
+
+		return { ok: true, sandboxId: sandbox.sandboxId, url, displayName };
+	} catch (err) {
+		const message = err instanceof Error ? err.message : "Unknown error";
+		return { ok: false, error: message };
+	}
+}
+
 async function wakeBot(botName: string): Promise<{
 	bot: string;
 	action: "already_alive" | "resumed" | "created" | "failed";
@@ -263,13 +398,30 @@ async function wakeBot(botName: string): Promise<{
 		// Peers API or resume failed — fall through to create
 	}
 
-	// Step 3: Create a fresh sandbox
-	const result = await createFreshSandbox(botName);
-	if (result.ok) {
-		return { bot: botName, action: "created", url: result.url, sandboxId: result.sandboxId };
+	// Step 3: Create a fresh sandbox (roster bots) or deploy from agent library
+	const normalized = botName.toLowerCase().replace(/\s+/g, "-");
+	if (FLEET_ROSTER[normalized]) {
+		const result = await createFreshSandbox(normalized);
+		if (result.ok) {
+			return { bot: botName, action: "created", url: result.url, sandboxId: result.sandboxId };
+		}
+		return { bot: botName, action: "failed", error: result.error };
 	}
 
-	return { bot: botName, action: "failed", error: result.error };
+	// Not in roster — try the agent library
+	if (DEPLOYABLE_AGENTS[normalized]) {
+		const result = await deployAgent(normalized);
+		if (result.ok) {
+			return { bot: botName, action: "created", url: result.url, sandboxId: result.sandboxId };
+		}
+		return { bot: botName, action: "failed", error: result.error };
+	}
+
+	return {
+		bot: botName,
+		action: "failed",
+		error: `"${botName}" is not in the fleet roster or agent library. Use list_deployable to see available bots.`,
+	};
 }
 
 // --- AI Fleet Tools ---
@@ -302,7 +454,8 @@ const fleetTools: ToolSet = {
 					alive: alive.length,
 					dead: dead.length,
 					bots: results,
-					deployable: Object.keys(FLEET_ROSTER),
+					rosterBots: Object.keys(FLEET_ROSTER),
+					deployableAgents: Object.keys(DEPLOYABLE_AGENTS),
 				};
 			} catch (err) {
 				return { error: err instanceof Error ? err.message : "Unknown error" };
@@ -319,15 +472,44 @@ const fleetTools: ToolSet = {
 		execute: async ({ botName }) => wakeBot(botName),
 	}),
 
+	deploy_agent: tool({
+		description:
+			"Deploy any agent from the bOpen agent library as a live ephemeral bot. Creates a sandbox with the gateway template and the agent's personality. Use when asked to deploy, start, or bring up an agent that isn't a dedicated bot (like researcher, designer, front-desk, etc.).",
+		inputSchema: z.object({
+			agentName: z
+				.string()
+				.describe("Agent name without .md extension (e.g. 'researcher', 'designer', 'front-desk')"),
+		}),
+		execute: async ({ agentName }) => {
+			const result = await deployAgent(agentName);
+			if (result.ok) {
+				return {
+					deployed: true,
+					agent: agentName,
+					displayName: result.displayName,
+					url: result.url,
+					sandboxId: result.sandboxId,
+				};
+			}
+			return { deployed: false, agent: agentName, error: result.error };
+		},
+	}),
+
 	list_deployable: tool({
 		description:
-			"List bots that Johnny can deploy fresh from their own repos. Other bots may be visible in the peers API but can only be resumed, not redeployed from scratch.",
+			"List all bots and agents that Johnny can deploy. Includes dedicated bots (with their own repos) and the full bOpen agent library (28 agents deployable as ephemeral bots).",
 		inputSchema: z.object({}),
 		execute: async () => ({
-			bots: Object.entries(FLEET_ROSTER).map(([name, config]) => ({
+			rosterBots: Object.entries(FLEET_ROSTER).map(([name, config]) => ({
 				name,
 				repo: config.repo,
 				description: config.description,
+				type: "persistent" as const,
+			})),
+			agents: Object.entries(DEPLOYABLE_AGENTS).map(([name, displayName]) => ({
+				name,
+				displayName,
+				type: "ephemeral" as const,
 			})),
 		}),
 	}),
