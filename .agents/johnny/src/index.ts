@@ -4,11 +4,17 @@ import { fileURLToPath } from "node:url";
 import { Sandbox } from "@vercel/sandbox";
 import { gateway, generateText, streamText, type ToolSet, tool } from "ai";
 import { createBashTool, experimental_createSkillTool as createSkillTool } from "bash-tool";
-import { loadAgentSource, parseAgentDefinition } from "clawnet/src/commands/bot/agent-source.js";
+import {
+	loadAgentSource,
+	loadBotDefinition,
+	parseAgentDefinition,
+	resolveAgentSkillInstalls,
+} from "clawnet/src/commands/bot/agent-source.js";
 import { notifyRegistry } from "clawnet/src/commands/bot/registry-hook.js";
 import { ensureBunSnapshot } from "clawnet/src/commands/bot/snapshot.js";
 import { type Context, Hono } from "hono";
 import { z } from "zod";
+import { installSkillsInSandbox, resolveTemplateSource } from "./deploy-utils.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SOUL = readFileSync(join(__dirname, "..", "SOUL.md"), "utf-8");
@@ -275,9 +281,13 @@ async function createFreshSandbox(
 	}
 }
 
-async function deployAgent(
-	agentName: string,
-): Promise<{ ok: boolean; sandboxId?: string; url?: string; displayName?: string; error?: string }> {
+async function deployAgent(agentName: string): Promise<{
+	ok: boolean;
+	sandboxId?: string;
+	url?: string;
+	displayName?: string;
+	error?: string;
+}> {
 	const normalized = agentName.toLowerCase().replace(/\s+/g, "-");
 
 	// Resolve dynamically from marketplace — searches all plugin repos
@@ -297,6 +307,23 @@ async function deployAgent(
 		if (!soulContent) {
 			return { ok: false, error: `Agent "${normalized}" has no content after frontmatter.` };
 		}
+
+		// Load bot definition for template preferences (optional — most agents don't have one)
+		const botDef = await loadBotDefinition(source, definition.name);
+
+		// Resolve skills from agent frontmatter tools field
+		const { installs: skillInstalls, unresolved: unresolvedSkills } =
+			await resolveAgentSkillInstalls(source, definition.skillRefs);
+
+		if (unresolvedSkills.length > 0) {
+			console.warn(
+				`[deployAgent] Unresolved skills for ${normalized}: ${unresolvedSkills.join(", ")}`,
+			);
+		}
+
+		// Determine which template to use
+		const defaultPath = "templates/gateway";
+		const template = resolveTemplateSource(botDef, GATEWAY_TEMPLATE_REPO, defaultPath);
 
 		// Get a valid Bun snapshot
 		const snapshotId = await ensureBunSnapshot();
@@ -319,26 +346,48 @@ async function deployAgent(
 			env,
 		});
 
-		// Clone clawnet-bot repo for the gateway template
+		// Clone template repo
 		const ghToken = process.env.GITHUB_TOKEN?.trim();
-		const repoUrl = ghToken
-			? `https://x-access-token:${ghToken}@github.com/${GATEWAY_TEMPLATE_REPO}.git`
-			: `https://github.com/${GATEWAY_TEMPLATE_REPO}.git`;
+		const templateRepoUrl = ghToken
+			? `https://x-access-token:${ghToken}@github.com/${template.repo}.git`
+			: `https://github.com/${template.repo}.git`;
 		await sandbox.runCommand({
 			cmd: "bash",
-			args: ["-lc", `git clone --depth 1 ${repoUrl} /tmp/clawnet-bot`],
+			args: ["-lc", `git clone --depth 1 ${templateRepoUrl} /tmp/template-repo`],
 		});
 
-		// Copy gateway template to workspace
+		// Copy template to workspace
 		await sandbox.runCommand({
 			cmd: "bash",
-			args: ["-lc", "cp -r /tmp/clawnet-bot/templates/gateway /app/bot"],
+			args: ["-lc", `cp -r /tmp/template-repo/${template.path} /app/bot`],
 		});
 
 		// Write the agent's body as SOUL.md
 		await sandbox.runCommand({
 			cmd: "bash",
 			args: ["-lc", `cat > /app/bot/SOUL.md << 'CLAWNET_EOF'\n${soulContent}\nCLAWNET_EOF`],
+		});
+
+		// Install resolved skills into /app/bot/skills/
+		if (skillInstalls.length > 0) {
+			const { installed, skipped } = await installSkillsInSandbox(
+				sandbox,
+				skillInstalls,
+				"/app/bot",
+				ghToken,
+			);
+			if (installed.length > 0) {
+				console.log(`[deployAgent] Installed ${installed.length} skills: ${installed.join(", ")}`);
+			}
+			if (skipped.length > 0) {
+				console.warn(`[deployAgent] Skipped ${skipped.length} skills: ${skipped.join(", ")}`);
+			}
+		}
+
+		// Cleanup template repo
+		await sandbox.runCommand({
+			cmd: "bash",
+			args: ["-lc", "rm -rf /tmp/template-repo"],
 		});
 
 		// Install dependencies and boot
@@ -435,7 +484,12 @@ async function wakeBot(botName: string): Promise<{
 	// Not in fleet config — try to deploy dynamically from any plugin repo
 	const agentResult = await deployAgent(normalized);
 	if (agentResult.ok) {
-		return { bot: botName, action: "created", url: agentResult.url, sandboxId: agentResult.sandboxId };
+		return {
+			bot: botName,
+			action: "created",
+			url: agentResult.url,
+			sandboxId: agentResult.sandboxId,
+		};
 	}
 
 	return { bot: botName, action: "failed", error: agentResult.error };
