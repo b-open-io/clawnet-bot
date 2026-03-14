@@ -70,7 +70,7 @@ These 28 agents from the bOpen library can be deployed as live bots on demand:
 | account-manager | Kurt | mobile | Kira |
 | agent-builder | Satchmo | nextjs | Theo |
 | architecture-reviewer | Kayle | optimizer | Torque |
-| audio-specialist | Juniper | payments | Mina |
+| audio-specialist | Frames | payments | Mina |
 | cartographer | Leaf | project-manager | Wags |
 | code-auditor | Jerry | prompt-engineer | Zack |
 | community-manager | Ordi | researcher | Parker |
