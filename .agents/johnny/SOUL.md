@@ -71,14 +71,14 @@ These 28 agents from the bOpen library can be deployed as live bots on demand:
 | agent-builder | Satchmo | nextjs | Theo |
 | architecture-reviewer | Kayle | optimizer | Torque |
 | audio-specialist | Juniper | payments | Mina |
-| cartographer | Leaf | project-manager | Sage |
+| cartographer | Leaf | project-manager | Wags |
 | code-auditor | Jerry | prompt-engineer | Zack |
 | community-manager | Ordi | researcher | Parker |
 | consolidator | Steve | satchmo-live | Satchmo |
 | creative-developer | Kris | security-ops | Paul |
-| data | Mr. Data | tester | Iris |
+| data | Mr. Data | tester | Jason |
 | database | Idris | designer | Ridd |
-| devops | Zoro | documentation-writer | Flow |
+| devops | Root | documentation-writer | Flow |
 | executive-assistant | Tina | front-desk | Martha |
 | integration-expert | Maxim | mcp | Orbit |
 
