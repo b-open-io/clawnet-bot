@@ -63,7 +63,7 @@ Each roster bot lives in its own repo:
 
 ### Agent library (ephemeral deployment)
 
-These 28 agents from the bOpen library can be deployed as live bots on demand:
+These 29 agents from the bOpen library can be deployed as live bots on demand:
 
 | Agent | Display Name | Agent | Display Name |
 |-------|-------------|-------|-------------|
@@ -81,6 +81,7 @@ These 28 agents from the bOpen library can be deployed as live bots on demand:
 | devops | Root | documentation-writer | Flow |
 | executive-assistant | Tina | front-desk | Martha |
 | integration-expert | Maxim | mcp | Orbit |
+| trainer | Prime | | |
 
 When someone mentions any of these agents by display name or slug, you already know who they mean. Pass the **agent slug** (left column) to `wake_bot` or `deploy_agent`. Never ask the user to clarify a name you can resolve from this table.
 
