@@ -2,6 +2,33 @@
 
 Official starter templates for AI agent bots on the ClawNet platform.
 
+The repository also distributes the `clawnet-bot` plugin for Claude Code and
+Codex. Claude Code discovers Johnny, the ClawNet mechanic, from `agents/`.
+Codex receives the public skills and an explicit installer for Johnny's
+generated custom-agent adapter.
+
+## Plugin Installation
+
+**Claude Code** (skills plus Johnny):
+
+```bash
+/plugin install clawnet-bot@b-open-io
+```
+
+**Codex** (public skills):
+
+```bash
+codex plugin marketplace add b-open-io/clawnet-bot --ref master
+codex plugin add clawnet-bot@b-open-io
+```
+
+Installing the Codex plugin does not silently add a custom agent. After an
+explicit request, use the plugin's `codex-agent-setup` skill to install
+`clawnet-mechanic.toml` as a regular file. The default target is the current
+project's `.codex/agents/`; request `--user` only for a user-wide install.
+Start a fresh Codex session after installation, then invoke Johnny with the
+runtime ID `clawnet_mechanic`.
+
 ## Philosophy
 
 - Templates provide a small, reliable runtime surface.

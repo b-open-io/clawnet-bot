@@ -61,7 +61,7 @@ run_template() {
 	elif [[ "$template" == "gateway" ]]; then
 		AI_GATEWAY_API_KEY="" PORT="$port" bun run src/index.ts >server.log 2>&1 &
 	elif [[ "$template" == "clark" ]]; then
-		OPENAI_API_KEY="" PORT="$port" bun run src/index.ts >server.log 2>&1 &
+		AI_GATEWAY_API_KEY="" OPENAI_API_KEY="" PORT="$port" bun run src/index.ts >server.log 2>&1 &
 	elif [[ -n "$wif" ]]; then
 		SIGMA_MEMBER_PRIVATE_KEY="$wif" PORT="$port" bun run src/index.ts >server.log 2>&1 &
 	else

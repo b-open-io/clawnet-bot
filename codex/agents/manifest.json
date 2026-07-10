@@ -1,0 +1,17 @@
+{
+  "schema_version": "1",
+  "generator_schema_version": "1",
+  "manager": "clawnet-bot",
+  "agents": [
+    {
+      "source_name": "clawnet-mechanic",
+      "source_path": "agents/clawnet-mechanic.md",
+      "source_version": "1.2.3",
+      "source_hash": "sha256:fe94b7c74db8b68e2fa5d0687bbc9623b3b9bbe6f087899fbb402fa983fa3e8a",
+      "generated_file": "clawnet-mechanic.toml",
+      "generated_hash": "sha256:43357b9cf629a7067c409cf02b42339e1828c846b4286986530b325dc04e9e34",
+      "agent_name": "clawnet_mechanic",
+      "default_install": true
+    }
+  ]
+}
