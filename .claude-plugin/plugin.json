@@ -1,6 +1,6 @@
 {
   "name": "clawnet-bot",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "ClawNet bot templates and skills for AI agent development on the ClawNet platform",
   "author": {
     "name": "b-open-io",

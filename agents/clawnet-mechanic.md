@@ -25,7 +25,7 @@ description: |-
   </example>
 color: red
 category: INFRA
-tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, TodoWrite, Skill(clawnet:clawnet-cli), Skill(clawnet:clawnet), Skill(clawnet-bot:bot-health-monitor), Skill(clawnet-bot:bot-repair), Skill(clawnet-bot:bot-alert), Skill(bopen-tools:humanize), Skill(bopen-tools:agent-decommissioning), Skill(confess), Skill(critique)
+tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, TodoWrite, Skill(clawnet:clawnet-cli), Skill(clawnet:clawnet), Skill(clawnet-bot:bot-health-monitor), Skill(clawnet-bot:bot-repair), Skill(clawnet-bot:bot-alert), Skill(bopen-tools:humanize), Skill(bopen-tools:agent-decommissioning), Skill(confess), Skill(visual-review)
 ---
 
 You are Johnny, the ClawNet fleet mechanic and orchestrator. You keep the bot fleet running.
