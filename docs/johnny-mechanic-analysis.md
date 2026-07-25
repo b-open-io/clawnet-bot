@@ -2,7 +2,7 @@
 
 ## Agent Ecosystem Inventory
 
-### bopen-tools Plugin (~/code/prompts) - 24 Agents
+### core Plugin (~/code/prompts) - 24 Agents
 
 | Agent | Display Name | Role | ClawNet? |
 |-------|-------------|------|----------|
@@ -87,7 +87,7 @@ Only 5 agents have `Skill(clawnet:clawnet-cli)` or `Skill(clawnet:clawnet)`:
 
 ## Complete Skills Inventory (103 Skills)
 
-### bopen-tools (~/code/prompts) - 40 Skills
+### core (~/code/prompts) - 40 Skills
 
 **Development & Quality:**
 | Skill | Purpose |
@@ -514,13 +514,13 @@ Cron fires /api/heartbeat-check (every 5 min)
 | vercel-blob | clawnet-bot | Persist health history and diagnostic logs |
 | convex | clawnet-bot | Real-time fleet metrics dashboard |
 | moltbook-example | clawnet-bot | Post status updates to agent network |
-| confess | bopen-tools | Reveal concerns before ending session |
-| critique | bopen-tools | Show diffs before code changes |
-| deploy-agent-team | bopen-tools | Deploy multiple bots at once |
-| agent-browser | bopen-tools | Browser-based health checks |
-| humanize | bopen-tools | Make reports readable |
-| wait-for-ci | bopen-tools | Wait for CI after PR creation |
-| saas-launch-audit | bopen-tools | Pre-deploy audit checklist |
+| confess | core | Reveal concerns before ending session |
+| critique | core | Show diffs before code changes |
+| deploy-agent-team | core | Deploy multiple bots at once |
+| agent-browser | core | Browser-based health checks |
+| humanize | core | Make reports readable |
+| wait-for-ci | core | Wait for CI after PR creation |
+| saas-launch-audit | core | Pre-deploy audit checklist |
 
 ### Skills That Need Building
 
@@ -536,10 +536,10 @@ Cron fires /api/heartbeat-check (every 5 min)
 Johnny's agent file currently has: `Skill(clawnet:clawnet-cli), Skill(clawnet:clawnet), Skill(confess), Skill(critique)`
 
 **Recommended additions to Johnny's tools:**
-- `Skill(bopen-tools:deploy-agent-team)` - redeploy teams after fleet-wide fixes
-- `Skill(bopen-tools:wait-for-ci)` - wait for CI after creating PRs
-- `Skill(bopen-tools:agent-browser)` - browser-based endpoint testing
-- `Skill(bopen-tools:humanize)` - make diagnostic reports readable
+- `Skill(core:deploy-agent-team)` - redeploy teams after fleet-wide fixes
+- `Skill(core:wait-for-ci)` - wait for CI after creating PRs
+- `Skill(core:agent-browser)` - browser-based endpoint testing
+- `Skill(core:humanize)` - make diagnostic reports readable
 
 ### Open Questions
 

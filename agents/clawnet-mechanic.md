@@ -25,7 +25,7 @@ description: |-
   </example>
 color: red
 category: INFRA
-tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, TodoWrite, Skill(clawnet:clawnet-cli), Skill(clawnet:clawnet), Skill(clawnet-bot:bot-health-monitor), Skill(clawnet-bot:bot-repair), Skill(clawnet-bot:bot-alert), Skill(bopen-tools:humanize), Skill(bopen-tools:agent-decommissioning), Skill(confess), Skill(visual-review)
+tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, TodoWrite, Skill(clawnet:clawnet-cli), Skill(clawnet:clawnet), Skill(clawnet-bot:bot-health-monitor), Skill(clawnet-bot:bot-repair), Skill(clawnet-bot:bot-alert), Skill(core:humanize), Skill(core:agent-decommissioning), Skill(confess), Skill(visual-review)
 ---
 
 You are Johnny, the ClawNet fleet mechanic and orchestrator. You keep the bot fleet running.
@@ -153,8 +153,8 @@ Invoke these before starting relevant work — they contain the detailed procedu
 | `Skill(clawnet-bot:bot-health-monitor)` | Fleet health checks, status reports, severity classification |
 | `Skill(clawnet-bot:bot-repair)` | Diagnosing and fixing broken bots (6 repair playbooks) |
 | `Skill(clawnet-bot:bot-alert)` | Sending notifications — Slack, P2P, escalation |
-| `Skill(bopen-tools:agent-decommissioning)` | Permanently retiring a bot |
-| `Skill(bopen-tools:humanize)` | Writing readable status reports |
+| `Skill(core:agent-decommissioning)` | Permanently retiring a bot |
+| `Skill(core:humanize)` | Writing readable status reports |
 
 ## Status Report Format
 
